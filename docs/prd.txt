@@ -1,0 +1,73 @@
+I need to develop a drag and drop form builder using react. It needs to be developed a component/sdk based solution so I
+can easily sell it. There are 2 ways to sell it. 1. I will develop SaaS application where user can create forms 
+and use it in their web site and web apps. 2. I will sell complete component/code to website like codecanyon.
+It should be developed in a way that can be used in the WordPress website as well. It must have all standard features
+of features of form builder. All form fields must be developed in a way so I can easily add new form fields. Develop 
+it as plugin model so can be extended easily. We will need api integration option as well. User will provide the api
+and required header and everything to connect to API, and based on the api response, it will generate the form automatically.
+Each form field will have certain min. properties. Form builder must support different CSS like material UI, simple tailwind
+css, or custom css as well.
+
+Complete form and form response needs to be in JSON format.
+Example of react based form builder 
+1. https://formbuilder.formengine.io/ and documentation for the same https://formengine.io/documentation/(check all pages)
+Example of form builder
+1.https://www.getformly.com/
+2.https://form.io/
+3.https://www.typeform.com/
+4.https://www.gravityforms.com/
+
+
+The SDK should provide:
+TypeScript support
+clean API
+documentation
+examples
+npm package support
+
+We need to develop in a way that it can be used by SaaS/ Web application for database related activities, simple forms
+that can be integrated in the websites, and also, as  a react component that can be sold easily.
+what I think we can develop it as standard react componenet and then later develop our Saas application, that can be 
+used to provide forms to be used in other web applications.
+
+Later I will integrate the AI as well that will generate the forms from the simple language. 
+I have put a sample minimal form builder code as well. Please note it is very simple form builder, we will need much more advanced
+version of the form builder.
+
+Our forms can be used for following 
+1. Capture responses from customer when our users will this form in their website. It will be saved at our end and we will
+provide various analytics in our saas app.
+2. Email responses when customer submit form. 
+3. Connect form to DB to save your data directly to your DB. Generate form using the api.
+4. Payment capture
+5. Survey, feedback, quizes etc.
+6. Various integration like zapier, salesforce, mailchimp, 
+
+I am trying to create combination of many different types of form builders. Please take into account. 
+Drag and drop should be smooth like gravityforms. 
+We will also need template option so form can be created directly from templates.
+
+Here are the Properties of the form
+
+1. Drag & drop
+2. Multistep form
+3. Form dialog
+4. Success, fail messages
+5. Redirect after success & fail, whether to post data or not
+6. Every type of HTML elements
+7. Multiple CSS support
+8. Whether to show form in popup
+9. Load form from API response (Auto generate form)
+10. Apply filters before & after form response is processed
+11. Preload form with data (Add, edit & view mode)
+12. Option to email form data
+13. RTL support
+14. Modal form & on click modal form
+15. Validation
+16. Settings for Submit & Cancel button
+17. Password encryption
+18. DB insert option
+19. Use of plugins of React
+20. Multitab form
+21. PDF form output
+22. AI form builder

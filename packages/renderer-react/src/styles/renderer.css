@@ -1,0 +1,97 @@
+.rfb-renderer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rfb-renderer__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.rfb-renderer__description {
+  margin: 0 0 1rem;
+  color: #555;
+}
+
+.rfb-renderer__step-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.rfb-renderer__step-indicator {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rfb-renderer__step-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.rfb-renderer__step-description {
+  margin: 0.35rem 0 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.rfb-renderer__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.5rem 0.85rem;
+}
+
+.rfb-renderer__grid-item {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .rfb-renderer__grid-item {
+    grid-column: span 12 / span 12 !important;
+  }
+}
+
+.rfb-renderer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rfb-renderer__button {
+  padding: 0.6rem 1.25rem;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.rfb-renderer__button--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.rfb-renderer__button--primary:hover {
+  background: #1d4ed8;
+}
+
+.rfb-renderer__button--secondary {
+  background: #fff;
+  color: #18181b;
+  border-color: #d4d4d8;
+}
+
+.rfb-renderer__button--secondary:hover {
+  background: #f4f4f5;
+}
+
+.rfb-renderer__status {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: #166534;
+}

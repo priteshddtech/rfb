@@ -1,0 +1,261 @@
+.rfb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.rfb-field__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rfb-field__description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.rfb-field__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
+.rfb-field__required {
+  color: #b42318;
+}
+
+.rfb-input,
+.rfb-textarea,
+.rfb-select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+/* ---------- Size presets ---------- */
+
+.rfb-field--size-small .rfb-input,
+.rfb-field--size-small .rfb-textarea,
+.rfb-field--size-small .rfb-select {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.rfb-field--size-medium .rfb-input,
+.rfb-field--size-medium .rfb-textarea,
+.rfb-field--size-medium .rfb-select {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.95rem;
+}
+
+.rfb-field--size-large .rfb-input,
+.rfb-field--size-large .rfb-textarea,
+.rfb-field--size-large .rfb-select {
+  padding: 0.7rem 0.85rem;
+  font-size: 1.05rem;
+}
+
+.rfb-input:focus,
+.rfb-textarea:focus,
+.rfb-select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+  border-color: #3b82f6;
+}
+
+.rfb-input:disabled,
+.rfb-textarea:disabled,
+.rfb-select:disabled {
+  background: #f4f4f5;
+  cursor: not-allowed;
+}
+
+.rfb-checkbox,
+.rfb-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.rfb-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rfb-html-block {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.rfb-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.rfb-password {
+  display: flex;
+  gap: 0.35rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.rfb-password .rfb-input {
+  flex: 1;
+}
+
+.rfb-password__toggle {
+  padding: 0 0.7rem;
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  background: #f8fafc;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.rfb-file {
+  font: inherit;
+}
+
+.rfb-file__list {
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 1rem;
+  font-size: 0.8rem;
+  color: #52525b;
+}
+
+.rfb-rating {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+
+.rfb-rating__star {
+  font-size: 1.4rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #d4d4d8;
+  padding: 0;
+}
+
+.rfb-rating__star--active {
+  color: #f59e0b;
+}
+
+.rfb-rating__star:disabled {
+  cursor: not-allowed;
+}
+
+.rfb-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rfb-slider__input {
+  flex: 1;
+}
+
+.rfb-slider__value {
+  min-width: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: #52525b;
+}
+
+/* ---------- Static / presentational fields ---------- */
+
+.rfb-heading {
+  margin: 0 0 0.4rem;
+  color: #18181b;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.rfb-heading--h1 {
+  font-size: 1.75rem;
+}
+.rfb-heading--h2 {
+  font-size: 1.5rem;
+}
+.rfb-heading--h3 {
+  font-size: 1.25rem;
+}
+.rfb-heading--h4 {
+  font-size: 1.1rem;
+}
+.rfb-heading--h5 {
+  font-size: 1rem;
+}
+.rfb-heading--h6 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rfb-label-block {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #18181b;
+}
+
+.rfb-span {
+  display: inline;
+  color: #18181b;
+  font-size: 0.95rem;
+}
+
+.rfb-paragraph {
+  margin: 0;
+  color: #3f3f46;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.rfb-image {
+  display: block;
+  max-width: 100%;
+}
+
+.rfb-image__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.rfb-divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #d4d4d8;
+  margin: 0.25rem 0;
+}
+
+.rfb-divider--dashed {
+  border-top-style: dashed;
+}
+
+.rfb-divider--dotted {
+  border-top-style: dotted;
+}
+
+.rfb-spacer {
+  width: 100%;
+  pointer-events: none;
+}
