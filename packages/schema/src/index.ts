@@ -28,6 +28,8 @@ export type {
   ImageField,
   LabelField,
   NumberField,
+  OptionsSource,
+  OptionsSourceApi,
   ParagraphField,
   PasswordField,
   PhoneField,

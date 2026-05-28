@@ -187,6 +187,7 @@ export function CanvasFieldItem({
               value={previewValueFor(field)}
               onChange={() => {}}
               readOnly
+              preview
             />
           </div>
         )}

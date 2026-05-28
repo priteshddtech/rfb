@@ -11,6 +11,11 @@ export interface FieldComponentProps<
   error?: string;
   disabled?: boolean;
   readOnly?: boolean;
+  /**
+   * When `true`, the field is being rendered as a static preview (e.g. inside
+   * the builder canvas) and should avoid side effects such as remote fetches.
+   */
+  preview?: boolean;
 }
 
 export type FieldComponent<TField extends FormField = FormField> =

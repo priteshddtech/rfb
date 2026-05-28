@@ -11,6 +11,12 @@ export {
   type FieldComponentProps,
 } from "./types.js";
 
+export {
+  invalidateRemoteOptions,
+  useRemoteOptions,
+  type RemoteOptionsState,
+} from "./hooks/useRemoteOptions.js";
+
 export { ReactFieldRegistry } from "./registry/ReactFieldRegistry.js";
 export {
   basicFieldComponentMap,

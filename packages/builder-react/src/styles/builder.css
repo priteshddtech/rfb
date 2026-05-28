@@ -1311,3 +1311,90 @@
   font-size: 0.82rem;
   cursor: pointer;
 }
+
+/* ---------- Options source mode toggle (Static / API) ---------- */
+
+.rfb-builder-properties__options-mode {
+  display: inline-flex;
+  background: var(--rfb-surface);
+  border: 1px solid var(--rfb-border);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.rfb-builder-properties__options-mode-btn {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: var(--rfb-text-muted);
+  border-radius: 999px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rfb-builder-properties__options-mode-btn:hover {
+  color: var(--rfb-text);
+}
+
+.rfb-builder-properties__options-mode-btn--active {
+  background: var(--rfb-primary);
+  color: #fff;
+}
+
+/* ---------- API options config ---------- */
+
+.rfb-builder-properties__api-config {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.rfb-builder-properties__api-test {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 0.25rem;
+  border-top: 1px dashed var(--rfb-border);
+}
+
+.rfb-builder-properties__api-test-ok {
+  font-size: 0.78rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  padding: 0.45rem 0.55rem;
+  color: #065f46;
+}
+
+.rfb-builder-properties__api-test-ok p {
+  margin: 0 0 0.3rem;
+}
+
+.rfb-builder-properties__api-test-ok ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rfb-builder-properties__api-test-ok code {
+  background: #d1fae5;
+  padding: 0 0.2rem;
+  border-radius: 3px;
+}
+
+.rfb-builder-properties__api-test-error {
+  margin: 0;
+  font-size: 0.78rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 0.45rem 0.55rem;
+  color: #991b1b;
+}

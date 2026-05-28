@@ -16,6 +16,13 @@
   color: #555;
 }
 
+.rfb-field__hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
 .rfb-field__error {
   margin: 0;
   font-size: 0.85rem;

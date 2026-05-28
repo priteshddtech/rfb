@@ -130,9 +130,40 @@ export interface SelectOption {
   value: string | number | boolean;
 }
 
+/**
+ * How the option list is populated. When `optionsSource` is absent or
+ * `type === "static"`, the field's own `options` array is used (legacy
+ * behaviour). When `type === "api"`, options are fetched at runtime.
+ */
+export type OptionsSource =
+  | { type: "static" }
+  | OptionsSourceApi;
+
+export interface OptionsSourceApi {
+  type: "api";
+  /** Endpoint URL. Required. */
+  url: string;
+  method?: "GET" | "POST";
+  /** Optional headers (e.g. for auth / content-type). */
+  headers?: Record<string, string>;
+  /** Optional JSON body string for POST requests. */
+  body?: string;
+  /**
+   * Dot-path into the JSON response that yields the array of items.
+   * Empty / omitted means the response itself is the array.
+   * Example: `"data.items"` for `{ data: { items: [...] } }`.
+   */
+  resultsPath?: string;
+  /** Property in each item that holds the option's value. */
+  valueKey: string;
+  /** Property in each item that holds the option's label. */
+  labelKey: string;
+}
+
 export interface SelectField extends FieldBase {
   type: "select";
   options: SelectOption[];
+  optionsSource?: OptionsSource;
   multiple?: boolean;
 }
 
@@ -143,6 +174,7 @@ export interface CheckboxField extends FieldBase {
 export interface RadioField extends FieldBase {
   type: "radio";
   options: SelectOption[];
+  optionsSource?: OptionsSource;
 }
 
 export interface DateField extends FieldBase {

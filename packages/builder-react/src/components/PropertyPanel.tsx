@@ -1,4 +1,10 @@
-import type { FormField, SelectOption, ValidationRule } from "@rfb-ddt/schema";
+import type {
+  FormField,
+  OptionsSource,
+  OptionsSourceApi,
+  SelectOption,
+  ValidationRule,
+} from "@rfb-ddt/schema";
 import { useMemo, useState } from "react";
 import { FIELD_ICONS } from "../constants.js";
 import { IconPlus, IconTrash } from "../icons.js";
@@ -330,61 +336,18 @@ export function PropertyPanel({ field, onChange, onDelete }: PropertyPanelProps)
             )}
 
             {hasOptions && (
-              <div className="rfb-builder-properties__options">
-                <div className="rfb-builder-properties__options-header">
-                  <span>Options</span>
-                  <button
-                    type="button"
-                    className="rfb-builder-properties__option-add"
-                    onClick={addOption}
-                  >
-                    <IconPlus /> Add option
-                  </button>
-                </div>
-                <div className="rfb-builder-properties__options-table">
-                  <div className="rfb-builder-properties__options-row rfb-builder-properties__options-row--head">
-                    <span>Label</span>
-                    <span>Value</span>
-                    <span aria-hidden="true" />
-                  </div>
-                  {options.length === 0 && (
-                    <p className="rfb-builder-panel__hint">
-                      No options yet. Add one above.
-                    </p>
-                  )}
-                  {options.map((opt, index) => (
-                    <div
-                      key={index}
-                      className="rfb-builder-properties__options-row"
-                    >
-                      <input
-                        type="text"
-                        value={opt.label}
-                        onChange={(e) =>
-                          updateOption(index, { label: e.target.value })
-                        }
-                        placeholder={`Option ${index + 1}`}
-                      />
-                      <input
-                        type="text"
-                        value={String(opt.value)}
-                        onChange={(e) =>
-                          updateOption(index, { value: e.target.value })
-                        }
-                        placeholder={`option${index + 1}`}
-                      />
-                      <button
-                        type="button"
-                        className="rfb-builder-properties__option-remove"
-                        aria-label="Remove option"
-                        onClick={() => removeOption(index)}
-                      >
-                        <IconTrash />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <OptionsEditor
+                options={options}
+                optionsSource={
+                  (field as { optionsSource?: OptionsSource }).optionsSource
+                }
+                onOptionsSourceChange={(next) =>
+                  onChange({ optionsSource: next } as Partial<FormField>)
+                }
+                onUpdateOption={updateOption}
+                onAddOption={addOption}
+                onRemoveOption={removeOption}
+              />
             )}
 
             {!isStatic && field.type !== "hidden" && (
@@ -490,6 +453,357 @@ export function PropertyPanel({ field, onChange, onDelete }: PropertyPanelProps)
       </div>
     </aside>
   );
+}
+
+/* ---------- Options editor (static / api) ---------- */
+
+interface OptionsEditorProps {
+  options: SelectOption[];
+  optionsSource: OptionsSource | undefined;
+  onOptionsSourceChange: (next: OptionsSource | undefined) => void;
+  onUpdateOption: (index: number, patch: Partial<SelectOption>) => void;
+  onAddOption: () => void;
+  onRemoveOption: (index: number) => void;
+}
+
+function OptionsEditor({
+  options,
+  optionsSource,
+  onOptionsSourceChange,
+  onUpdateOption,
+  onAddOption,
+  onRemoveOption,
+}: OptionsEditorProps) {
+  const mode: "static" | "api" =
+    optionsSource?.type === "api" ? "api" : "static";
+
+  function switchTo(nextMode: "static" | "api") {
+    if (nextMode === mode) return;
+    if (nextMode === "static") {
+      onOptionsSourceChange(undefined);
+      return;
+    }
+    onOptionsSourceChange({
+      type: "api",
+      url: "",
+      method: "GET",
+      valueKey: "value",
+      labelKey: "label",
+    });
+  }
+
+  return (
+    <div className="rfb-builder-properties__options">
+      <div className="rfb-builder-properties__options-header">
+        <span>Options</span>
+        <div
+          className="rfb-builder-properties__options-mode"
+          role="tablist"
+          aria-label="Options source"
+        >
+          {(["static", "api"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              className={[
+                "rfb-builder-properties__options-mode-btn",
+                mode === m && "rfb-builder-properties__options-mode-btn--active",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => switchTo(m)}
+            >
+              {m === "static" ? "Static" : "From API"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {mode === "static" && (
+        <>
+          <div className="rfb-builder-properties__options-table">
+            <div className="rfb-builder-properties__options-row rfb-builder-properties__options-row--head">
+              <span>Label</span>
+              <span>Value</span>
+              <span aria-hidden="true" />
+            </div>
+            {options.length === 0 && (
+              <p className="rfb-builder-panel__hint">
+                No options yet. Add one below.
+              </p>
+            )}
+            {options.map((opt, index) => (
+              <div key={index} className="rfb-builder-properties__options-row">
+                <input
+                  type="text"
+                  value={opt.label}
+                  onChange={(e) =>
+                    onUpdateOption(index, { label: e.target.value })
+                  }
+                  placeholder={`Option ${index + 1}`}
+                />
+                <input
+                  type="text"
+                  value={String(opt.value)}
+                  onChange={(e) =>
+                    onUpdateOption(index, { value: e.target.value })
+                  }
+                  placeholder={`option${index + 1}`}
+                />
+                <button
+                  type="button"
+                  className="rfb-builder-properties__option-remove"
+                  aria-label="Remove option"
+                  onClick={() => onRemoveOption(index)}
+                >
+                  <IconTrash />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="rfb-builder-properties__option-add"
+            onClick={onAddOption}
+          >
+            <IconPlus /> Add option
+          </button>
+        </>
+      )}
+
+      {mode === "api" && optionsSource?.type === "api" && (
+        <ApiOptionsEditor
+          source={optionsSource}
+          onChange={onOptionsSourceChange}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ---------- API options editor ---------- */
+
+interface ApiOptionsEditorProps {
+  source: OptionsSourceApi;
+  onChange: (next: OptionsSource) => void;
+}
+
+function ApiOptionsEditor({ source, onChange }: ApiOptionsEditorProps) {
+  const [testStatus, setTestStatus] = useState<
+    | { state: "idle" }
+    | { state: "loading" }
+    | { state: "ok"; count: number; sample: SelectOption[] }
+    | { state: "error"; message: string }
+  >({ state: "idle" });
+
+  const headersText = useMemo(
+    () =>
+      source.headers
+        ? Object.entries(source.headers)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("\n")
+        : "",
+    [source.headers],
+  );
+
+  function patch(p: Partial<OptionsSourceApi>) {
+    onChange({ ...source, ...p });
+  }
+
+  function setHeadersFromText(text: string) {
+    const headers: Record<string, string> = {};
+    for (const line of text.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const idx = trimmed.indexOf(":");
+      if (idx === -1) continue;
+      const key = trimmed.slice(0, idx).trim();
+      const value = trimmed.slice(idx + 1).trim();
+      if (key) headers[key] = value;
+    }
+    patch({ headers: Object.keys(headers).length ? headers : undefined });
+  }
+
+  async function runTest() {
+    if (!source.url) {
+      setTestStatus({ state: "error", message: "URL is required" });
+      return;
+    }
+    setTestStatus({ state: "loading" });
+    try {
+      const init: RequestInit = { method: source.method ?? "GET" };
+      if (source.headers && Object.keys(source.headers).length > 0) {
+        init.headers = source.headers;
+      }
+      if (init.method !== "GET" && source.body) init.body = source.body;
+
+      const res = await fetch(source.url, init);
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      const json: unknown = await res.json();
+
+      const arr = readJsonPath(json, source.resultsPath);
+      if (!Array.isArray(arr)) {
+        setTestStatus({
+          state: "error",
+          message: source.resultsPath
+            ? `Path "${source.resultsPath}" did not resolve to an array`
+            : "Response was not an array",
+        });
+        return;
+      }
+      const sample = arr.slice(0, 3).map((item) => {
+        const obj = (item ?? {}) as Record<string, unknown>;
+        return {
+          label: String(obj[source.labelKey] ?? obj[source.valueKey] ?? ""),
+          value: String(obj[source.valueKey] ?? ""),
+        };
+      });
+      setTestStatus({ state: "ok", count: arr.length, sample });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch";
+      setTestStatus({ state: "error", message });
+    }
+  }
+
+  return (
+    <div className="rfb-builder-properties__api-config">
+      <label className="rfb-builder-properties__field">
+        <span>URL</span>
+        <input
+          type="url"
+          value={source.url}
+          placeholder="https://api.example.com/options"
+          onChange={(e) => patch({ url: e.target.value })}
+        />
+      </label>
+
+      <div className="rfb-builder-properties__row">
+        <label className="rfb-builder-properties__field">
+          <span>Method</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={source.method ?? "GET"}
+            onChange={(e) =>
+              patch({ method: e.target.value as "GET" | "POST" })
+            }
+          >
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Results path</span>
+          <input
+            type="text"
+            value={source.resultsPath ?? ""}
+            placeholder="data.items"
+            onChange={(e) =>
+              patch({ resultsPath: e.target.value || undefined })
+            }
+          />
+        </label>
+      </div>
+
+      <div className="rfb-builder-properties__row">
+        <label className="rfb-builder-properties__field">
+          <span>Value key</span>
+          <input
+            type="text"
+            value={source.valueKey}
+            placeholder="id"
+            onChange={(e) => patch({ valueKey: e.target.value })}
+          />
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Label key</span>
+          <input
+            type="text"
+            value={source.labelKey}
+            placeholder="name"
+            onChange={(e) => patch({ labelKey: e.target.value })}
+          />
+        </label>
+      </div>
+
+      <label className="rfb-builder-properties__field">
+        <span>Headers (one per line, key: value)</span>
+        <textarea
+          rows={2}
+          defaultValue={headersText}
+          placeholder={"Authorization: Bearer …\nAccept: application/json"}
+          onBlur={(e) => setHeadersFromText(e.target.value)}
+        />
+      </label>
+
+      {source.method === "POST" && (
+        <label className="rfb-builder-properties__field">
+          <span>Body (raw JSON)</span>
+          <textarea
+            rows={3}
+            value={source.body ?? ""}
+            placeholder='{"q":"…"}'
+            onChange={(e) => patch({ body: e.target.value || undefined })}
+          />
+        </label>
+      )}
+
+      <div className="rfb-builder-properties__api-test">
+        <button
+          type="button"
+          className="rfb-builder-properties__option-add"
+          onClick={runTest}
+          disabled={testStatus.state === "loading"}
+        >
+          {testStatus.state === "loading" ? "Testing…" : "Test fetch"}
+        </button>
+
+        {testStatus.state === "ok" && (
+          <div className="rfb-builder-properties__api-test-ok">
+            <p>
+              Loaded <strong>{testStatus.count}</strong> item
+              {testStatus.count === 1 ? "" : "s"}. Sample:
+            </p>
+            <ul>
+              {testStatus.sample.map((s, i) => (
+                <li key={i}>
+                  <code>{String(s.value)}</code> — {s.label || <em>(no label)</em>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {testStatus.state === "error" && (
+          <p className="rfb-builder-properties__api-test-error">
+            {testStatus.message}
+          </p>
+        )}
+      </div>
+
+      <p className="rfb-builder-panel__hint">
+        Options are fetched at form render time and mapped using{" "}
+        <code>{source.valueKey || "valueKey"}</code> →&nbsp;value,&nbsp;
+        <code>{source.labelKey || "labelKey"}</code> → label.
+      </p>
+    </div>
+  );
+}
+
+function readJsonPath(value: unknown, path?: string): unknown {
+  if (!path) return value;
+  let current: unknown = value;
+  for (const segment of path.split(".")) {
+    if (!segment) continue;
+    if (current && typeof current === "object" && segment in current) {
+      current = (current as Record<string, unknown>)[segment];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
 }
 
 /* ---------- Static / presentational field controls ---------- */

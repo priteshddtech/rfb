@@ -1,5 +1,6 @@
 import type { RadioField as RadioFieldSchema } from "@rfb-ddt/schema";
 import { FieldWrapper, fieldControlId } from "../FieldWrapper.js";
+import { useRemoteOptions } from "../hooks/useRemoteOptions.js";
 import type { FieldComponentProps } from "../types.js";
 
 export function RadioFieldComponent({
@@ -10,18 +11,35 @@ export function RadioFieldComponent({
   error,
   disabled,
   readOnly,
+  preview,
 }: FieldComponentProps<RadioFieldSchema>) {
   const groupId = fieldControlId(field.id);
   const stringValue = value == null ? "" : String(value);
 
+  const { options, loading, error: loadError } = useRemoteOptions(
+    field.optionsSource,
+    field.options,
+    { preview },
+  );
+
+  const isApi = field.optionsSource?.type === "api";
+
   return (
-    <FieldWrapper field={field} error={error} controlId={groupId}>
+    <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={groupId}>
       <div
         className="rfb-radio-group"
         role="radiogroup"
         aria-invalid={error ? true : undefined}
       >
-        {field.options.map((opt) => {
+        {loading && (
+          <p className="rfb-field__hint">Loading options…</p>
+        )}
+        {!loading && isApi && preview && options.length === 0 && (
+          <p className="rfb-field__hint">
+            Loaded from API at runtime
+          </p>
+        )}
+        {options.map((opt) => {
           const optionId = `${groupId}-${String(opt.value)}`;
           return (
             <label key={optionId} className="rfb-radio" htmlFor={optionId}>
@@ -32,7 +50,7 @@ export function RadioFieldComponent({
                 className="rfb-radio__input"
                 value={String(opt.value)}
                 checked={stringValue === String(opt.value)}
-                disabled={disabled || readOnly}
+                disabled={disabled || readOnly || loading}
                 onChange={() => onChange(opt.value)}
                 onBlur={onBlur}
               />

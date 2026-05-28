@@ -1,5 +1,6 @@
 import type { SelectField as SelectFieldSchema } from "@rfb-ddt/schema";
 import { FieldWrapper, fieldControlId } from "../FieldWrapper.js";
+import { useRemoteOptions } from "../hooks/useRemoteOptions.js";
 import type { FieldComponentProps } from "../types.js";
 
 export function SelectFieldComponent({
@@ -10,8 +11,22 @@ export function SelectFieldComponent({
   error,
   disabled,
   readOnly,
+  preview,
 }: FieldComponentProps<SelectFieldSchema>) {
   const id = fieldControlId(field.id);
+
+  const { options, loading, error: loadError } = useRemoteOptions(
+    field.optionsSource,
+    field.options,
+    { preview },
+  );
+
+  const isApi = field.optionsSource?.type === "api";
+  const apiPlaceholder = isApi && preview
+    ? `Loaded from API: ${field.optionsSource?.type === "api" ? field.optionsSource.url || "—" : ""}`
+    : loading
+      ? "Loading options…"
+      : null;
 
   if (field.multiple) {
     const selected = Array.isArray(value)
@@ -21,13 +36,13 @@ export function SelectFieldComponent({
         : [String(value)];
 
     return (
-      <FieldWrapper field={field} error={error} controlId={id}>
+      <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={id}>
         <select
           id={id}
           name={field.name}
           className="rfb-select"
           multiple
-          disabled={disabled || readOnly}
+          disabled={disabled || readOnly || loading}
           value={selected}
           aria-invalid={error ? true : undefined}
           onChange={(e) => {
@@ -38,12 +53,15 @@ export function SelectFieldComponent({
           }}
           onBlur={onBlur}
         >
-          {field.options.map((opt) => (
+          {options.map((opt) => (
             <option key={String(opt.value)} value={String(opt.value)}>
               {opt.label}
             </option>
           ))}
         </select>
+        {apiPlaceholder && (
+          <p className="rfb-field__hint">{apiPlaceholder}</p>
+        )}
       </FieldWrapper>
     );
   }
@@ -51,21 +69,21 @@ export function SelectFieldComponent({
   const stringValue = value == null ? "" : String(value);
 
   return (
-    <FieldWrapper field={field} error={error} controlId={id}>
+    <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={id}>
       <select
         id={id}
         name={field.name}
         className="rfb-select"
-        disabled={disabled || readOnly}
+        disabled={disabled || readOnly || loading}
         value={stringValue}
         aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
       >
         <option value="" disabled={field.required}>
-          {field.placeholder ?? "Select…"}
+          {apiPlaceholder ?? field.placeholder ?? "Select…"}
         </option>
-        {field.options.map((opt) => (
+        {options.map((opt) => (
           <option key={String(opt.value)} value={String(opt.value)}>
             {opt.label}
           </option>
