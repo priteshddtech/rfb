@@ -10,7 +10,12 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { SCHEMA_VERSION, type FormField, type FormSchema } from "@rfb-ddt/schema";
+import {
+  SCHEMA_VERSION,
+  type FormField,
+  type FormSchema,
+  type LayoutType,
+} from "@rfb-ddt/schema";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CANVAS_DROP_ID,
@@ -21,6 +26,7 @@ import {
 import { BuilderCanvas } from "./components/BuilderCanvas.js";
 import { BuilderPreview } from "./components/BuilderPreview.js";
 import { PropertyPanel } from "./components/PropertyPanel.js";
+import { StepsBar } from "./components/StepsBar.js";
 import { Toolbox, type ToolboxPanel } from "./components/Toolbox.js";
 import {
   IconClipboard,
@@ -37,11 +43,21 @@ import {
 import type { FormBuilderProps } from "./types.js";
 import { createDefaultField } from "./utils/createField.js";
 import {
-  duplicateFieldInSchema,
-  insertFieldInSchema,
-  moveFieldInSchema,
-  removeFieldFromSchema,
-  reorderFieldsInSchema,
+  addPage,
+  duplicateFieldInPagedSchema,
+  getActivePageFields,
+  getPages,
+  hasPagedLayout,
+  insertFieldInPagedSchema,
+  moveFieldInPage,
+  removeFieldFromPagedSchema,
+  removePage,
+  reorderFieldsInPage,
+  reorderPages,
+  setLayoutType as setLayoutTypeHelper,
+  updatePage,
+} from "./utils/layoutHelpers.js";
+import {
   resizeFieldInSchema,
   updateFieldInSchema,
 } from "./utils/schemaHelpers.js";
@@ -84,6 +100,31 @@ export function FormBuilder({
   const [past, setPast] = useState<FormSchema[]>([]);
   const [future, setFuture] = useState<FormSchema[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [activePageId, setActivePageId] = useState<string | null>(null);
+
+  const layoutType: LayoutType = schema.layout?.type ?? "single";
+  const isPaged = hasPagedLayout(schema);
+  const pages = useMemo(() => getPages(schema), [schema]);
+
+  // Keep active page in sync with the schema (after undo/redo, layout flips, etc.)
+  useEffect(() => {
+    if (!isPaged) {
+      if (activePageId !== null) setActivePageId(null);
+      return;
+    }
+    if (pages.length === 0) {
+      if (activePageId !== null) setActivePageId(null);
+      return;
+    }
+    if (!activePageId || !pages.some((p) => p.id === activePageId)) {
+      setActivePageId(pages[0]!.id);
+    }
+  }, [isPaged, pages, activePageId]);
+
+  const visibleFields = useMemo(
+    () => getActivePageFields(schema, activePageId),
+    [schema, activePageId],
+  );
 
   const selectedField = useMemo(
     () => schema.fields.find((f) => f.id === selectedFieldId) ?? null,
@@ -179,27 +220,30 @@ export function FormBuilder({
     if (toolboxType) {
       const overCanvas =
         over.id === CANVAS_DROP_ID ||
-        schema.fields.some((f) => f.id === over.id);
+        visibleFields.some((f) => f.id === over.id);
       if (!overCanvas) return;
 
       const newField = createDefaultField(toolboxType, schema.fields);
-      let insertIndex = schema.fields.length;
-      if (over.id !== CANVAS_DROP_ID) {
-        const overIndex = schema.fields.findIndex((f) => f.id === over.id);
-        if (overIndex >= 0) insertIndex = overIndex + 1;
-      }
+      const insertAfterId =
+        over.id !== CANVAS_DROP_ID ? String(over.id) : undefined;
 
-      const next = insertFieldInSchema(schema, newField, insertIndex);
+      const next = insertFieldInPagedSchema(
+        schema,
+        newField,
+        activePageId,
+        insertAfterId,
+      );
       updateSchema(next);
       setSelectedFieldId(newField.id);
       return;
     }
 
     if (active.id !== over.id) {
-      const next = reorderFieldsInSchema(
+      const next = reorderFieldsInPage(
         schema,
         String(active.id),
         String(over.id),
+        activePageId,
       );
       updateSchema(next);
     }
@@ -211,16 +255,16 @@ export function FormBuilder({
   }
 
   function handleRemoveField(fieldId: string) {
-    updateSchema(removeFieldFromSchema(schema, fieldId));
+    updateSchema(removeFieldFromPagedSchema(schema, fieldId));
     if (selectedFieldId === fieldId) setSelectedFieldId(null);
   }
 
   function handleMoveField(fieldId: string, direction: "up" | "down") {
-    updateSchema(moveFieldInSchema(schema, fieldId, direction));
+    updateSchema(moveFieldInPage(schema, fieldId, direction, activePageId));
   }
 
   function handleDuplicateField(fieldId: string) {
-    const { schema: next, duplicateId } = duplicateFieldInSchema(
+    const { schema: next, duplicateId } = duplicateFieldInPagedSchema(
       schema,
       fieldId,
     );
@@ -230,6 +274,56 @@ export function FormBuilder({
 
   function handleResizeField(fieldId: string, span: number) {
     updateSchema(resizeFieldInSchema(schema, fieldId, span));
+  }
+
+  /* ---------- Page (step/tab) handlers ---------- */
+
+  function handleLayoutTypeChange(type: LayoutType) {
+    const { schema: next, activePageId: nextActive } = setLayoutTypeHelper(
+      schema,
+      type,
+    );
+    updateSchema(next);
+    setActivePageId(nextActive);
+    setSelectedFieldId(null);
+  }
+
+  function handleAddPage() {
+    const { schema: next, newPageId } = addPage(schema);
+    updateSchema(next);
+    setActivePageId(newPageId);
+    setSelectedFieldId(null);
+  }
+
+  function handleRenamePage(pageId: string, title: string) {
+    updateSchema(updatePage(schema, pageId, { title }));
+  }
+
+  function handleRemovePage(pageId: string) {
+    const page = pages.find((p) => p.id === pageId);
+    const willTakeFields = (page?.fieldIds.length ?? 0) > 0;
+    if (
+      willTakeFields &&
+      !window.confirm(
+        `Delete this ${layoutType === "tabs" ? "tab" : "step"} and its ${page!.fieldIds.length} field(s)?`,
+      )
+    ) {
+      return;
+    }
+    const { schema: next, nextActiveId } = removePage(schema, pageId);
+    updateSchema(next);
+    setActivePageId(nextActiveId);
+    if (selectedFieldId && !next.fields.some((f) => f.id === selectedFieldId)) {
+      setSelectedFieldId(null);
+    }
+  }
+
+  function handleReorderPage(pageId: string, direction: "left" | "right") {
+    const idx = pages.findIndex((p) => p.id === pageId);
+    if (idx < 0) return;
+    const targetIdx = direction === "left" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= pages.length) return;
+    updateSchema(reorderPages(schema, pageId, pages[targetIdx]!.id));
   }
 
   function handleExportJson() {
@@ -271,7 +365,7 @@ export function FormBuilder({
 
   function handleAddDefaultField() {
     const newField = createDefaultField("text", schema.fields);
-    updateSchema(insertFieldInSchema(schema, newField));
+    updateSchema(insertFieldInPagedSchema(schema, newField, activePageId));
     setSelectedFieldId(newField.id);
   }
 
@@ -437,18 +531,37 @@ export function FormBuilder({
               formDescription={schema.description ?? ""}
               formId={schema.id}
               formVersion={schema.version}
+              layoutType={layoutType}
               onFormPatch={(patch) => updateSchema({ ...schema, ...patch })}
               onMetaPatch={(patch) => updateSchema({ ...schema, ...patch })}
+              onLayoutTypeChange={handleLayoutTypeChange}
             />
-            <BuilderCanvas
-              fields={schema.fields}
-              selectedFieldId={selectedFieldId}
-              onSelectField={setSelectedFieldId}
-              onRemoveField={handleRemoveField}
-              onDuplicateField={handleDuplicateField}
-              onResizeField={handleResizeField}
-              onMoveField={handleMoveField}
-            />
+            <div className="rfb-builder__canvas-column">
+              {isPaged && (
+                <StepsBar
+                  pages={pages}
+                  activePageId={activePageId}
+                  variant={layoutType === "tabs" ? "tabs" : "steps"}
+                  onSelect={(pageId) => {
+                    setActivePageId(pageId);
+                    setSelectedFieldId(null);
+                  }}
+                  onAdd={handleAddPage}
+                  onRename={handleRenamePage}
+                  onRemove={handleRemovePage}
+                  onReorder={handleReorderPage}
+                />
+              )}
+              <BuilderCanvas
+                fields={visibleFields}
+                selectedFieldId={selectedFieldId}
+                onSelectField={setSelectedFieldId}
+                onRemoveField={handleRemoveField}
+                onDuplicateField={handleDuplicateField}
+                onResizeField={handleResizeField}
+                onMoveField={handleMoveField}
+              />
+            </div>
             <PropertyPanel
               field={selectedField}
               onChange={handleFieldPatch}

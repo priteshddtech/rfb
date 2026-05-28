@@ -43,6 +43,7 @@ export function FormRenderer({
     validateField,
     nextPage,
     previousPage,
+    goToPage,
     submit,
   } = form;
 
@@ -55,7 +56,7 @@ export function FormRenderer({
     event.preventDefault();
     setStatusMessage(null);
 
-    if (isMultiPage && !isLastPage) {
+    if (isMultiPage && layoutType === "steps" && !isLastPage) {
       const advanced = nextPage();
       if (!advanced) {
         setStatusMessage("Please fix the errors on this step.");
@@ -101,7 +102,61 @@ export function FormRenderer({
         <p className="rfb-renderer__description">{schema.description}</p>
       )}
 
-      {isMultiPage && currentPage?.title && (
+      {isMultiPage && layoutType === "steps" && (
+        <ol className="rfb-renderer__stepper" aria-label="Form steps">
+          {(schema.layout?.pages ?? []).map((page, index) => {
+            const status =
+              index < currentPageIndex
+                ? "done"
+                : index === currentPageIndex
+                  ? "current"
+                  : "upcoming";
+            return (
+              <li
+                key={page.id}
+                className={[
+                  "rfb-renderer__stepper-item",
+                  `rfb-renderer__stepper-item--${status}`,
+                ].join(" ")}
+                aria-current={status === "current" ? "step" : undefined}
+              >
+                <span className="rfb-renderer__stepper-bullet">{index + 1}</span>
+                <span className="rfb-renderer__stepper-label">
+                  {page.title || `Step ${index + 1}`}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      {isMultiPage && layoutType === "tabs" && (
+        <div
+          className="rfb-renderer__tabbar"
+          role="tablist"
+          aria-label="Form sections"
+        >
+          {(schema.layout?.pages ?? []).map((page, index) => (
+            <button
+              key={page.id}
+              type="button"
+              role="tab"
+              aria-selected={index === currentPageIndex}
+              className={[
+                "rfb-renderer__tab",
+                index === currentPageIndex && "rfb-renderer__tab--active",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => goToPage(index)}
+            >
+              {page.title || `Tab ${index + 1}`}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isMultiPage && currentPage?.title && layoutType !== "tabs" && (
         <div className="rfb-renderer__step-header">
           <p className="rfb-renderer__step-indicator">
             Step {currentPageIndex + 1} of {pageCount}
@@ -143,7 +198,7 @@ export function FormRenderer({
 
       {showActions && !readOnly && (
         <div className="rfb-renderer__actions">
-          {isMultiPage && !isFirstPage && (
+          {isMultiPage && layoutType === "steps" && !isFirstPage && (
             <button
               type="button"
               className="rfb-renderer__button rfb-renderer__button--secondary"
@@ -164,7 +219,7 @@ export function FormRenderer({
           )}
 
           <button type="submit" className="rfb-renderer__button rfb-renderer__button--primary">
-            {isMultiPage && !isLastPage
+            {isMultiPage && layoutType === "steps" && !isLastPage
               ? "Next"
               : (schema.settings?.submitLabel ?? "Submit")}
           </button>

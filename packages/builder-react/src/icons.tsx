@@ -230,3 +230,15 @@ export const IconChevronRight = (p: IconProps) => (
     <path d="m9 6 6 6-6 6" />
   </svg>
 );
+export const IconChevronLeft = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="m15 6-6 6 6 6" />
+  </svg>
+);
+export const IconLayers = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="m12 2 9 5-9 5-9-5 9-5z" />
+    <path d="m3 12 9 5 9-5" />
+    <path d="m3 17 9 5 9-5" />
+  </svg>
+);

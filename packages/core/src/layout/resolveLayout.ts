@@ -1,4 +1,4 @@
-import type { FieldId, FormField, FormSchema } from "@rfb-ddt/schema";
+import type { FormField, FormSchema } from "@rfb-ddt/schema";
 
 export function getLayoutPageCount(schema: FormSchema): number {
   const layout = schema.layout;
@@ -8,6 +8,11 @@ export function getLayoutPageCount(schema: FormSchema): number {
   return layout.pages.length;
 }
 
+/**
+ * Returns the fields for the given page index, preserving the order of
+ * `page.fieldIds` (so per-page reordering in the builder is respected).
+ * Falls back to all fields when the form is single-page.
+ */
 export function getFieldsForPage(
   schema: FormSchema,
   pageIndex: number,
@@ -20,6 +25,11 @@ export function getFieldsForPage(
   const page = layout.pages[pageIndex];
   if (!page) return [];
 
-  const idSet = new Set<FieldId>(page.fieldIds);
-  return schema.fields.filter((field) => idSet.has(field.id));
+  const fieldsById = new Map(schema.fields.map((f) => [f.id, f]));
+  const ordered: FormField[] = [];
+  for (const id of page.fieldIds) {
+    const field = fieldsById.get(id);
+    if (field) ordered.push(field);
+  }
+  return ordered;
 }

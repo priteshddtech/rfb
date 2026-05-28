@@ -95,3 +95,107 @@
   font-size: 0.9rem;
   color: #166534;
 }
+
+/* ---------- Stepper (multi-step) ---------- */
+
+.rfb-renderer__stepper {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.rfb-renderer__stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  color: #71717a;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.rfb-renderer__stepper-item + .rfb-renderer__stepper-item::before {
+  content: "";
+  display: inline-block;
+  width: 1.5rem;
+  height: 1px;
+  background: #d4d4d8;
+  margin-right: 0.25rem;
+}
+
+.rfb-renderer__stepper-bullet {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #d4d4d8;
+  color: #71717a;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rfb-renderer__stepper-item--current {
+  color: #18181b;
+}
+
+.rfb-renderer__stepper-item--current .rfb-renderer__stepper-bullet {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.rfb-renderer__stepper-item--done {
+  color: #16a34a;
+}
+
+.rfb-renderer__stepper-item--done .rfb-renderer__stepper-bullet {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.rfb-renderer__stepper-label {
+  font-weight: 500;
+}
+
+/* ---------- Tab bar (multi-tab layout) ---------- */
+
+.rfb-renderer__tabbar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid #e4e4e7;
+  overflow-x: auto;
+}
+
+.rfb-renderer__tab {
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #71717a;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+
+.rfb-renderer__tab:hover {
+  color: #18181b;
+}
+
+.rfb-renderer__tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}

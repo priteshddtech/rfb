@@ -1107,3 +1107,207 @@
   flex: 1;
   min-width: 0;
 }
+
+/* ---------- Canvas column (StepsBar + canvas) ---------- */
+
+.rfb-builder__canvas-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.rfb-builder__canvas-column > .rfb-builder-canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------- Steps bar (above canvas) ---------- */
+
+.rfb-builder-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--rfb-surface);
+  border: 1px solid var(--rfb-border);
+  border-radius: var(--rfb-radius);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+.rfb-builder-steps__list {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rfb-builder-steps__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.45rem;
+  background: var(--rfb-surface-2);
+  border: 1px solid var(--rfb-border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.rfb-builder-steps__pill:hover {
+  border-color: var(--rfb-primary);
+}
+
+.rfb-builder-steps__pill--active {
+  background: var(--rfb-primary-soft, #eef2ff);
+  border-color: var(--rfb-primary);
+  box-shadow: 0 0 0 1px var(--rfb-primary) inset;
+}
+
+.rfb-builder-steps__index {
+  width: 1.4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rfb-surface);
+  border: 1px solid var(--rfb-border);
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rfb-text-muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.rfb-builder-steps__pill--active .rfb-builder-steps__index {
+  background: var(--rfb-primary);
+  border-color: var(--rfb-primary);
+  color: #fff;
+}
+
+.rfb-builder-steps__title {
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: inherit;
+  padding: 0.1rem 0.2rem;
+  cursor: pointer;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rfb-builder-steps__input {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.1rem 0.3rem;
+  border: 1px solid var(--rfb-primary);
+  border-radius: 4px;
+  background: var(--rfb-surface);
+  min-width: 5rem;
+  max-width: 10rem;
+}
+
+.rfb-builder-steps__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.rfb-builder-steps__pill:hover .rfb-builder-steps__actions,
+.rfb-builder-steps__pill--active .rfb-builder-steps__actions {
+  opacity: 1;
+}
+
+.rfb-builder-steps__action {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--rfb-text-muted);
+  cursor: pointer;
+}
+
+.rfb-builder-steps__action:hover:not(:disabled) {
+  background: var(--rfb-surface);
+  color: var(--rfb-text);
+}
+
+.rfb-builder-steps__action:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rfb-builder-steps__action--danger:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.rfb-builder-steps__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  background: var(--rfb-surface-2);
+  border: 1px dashed var(--rfb-border);
+  border-radius: 999px;
+  color: var(--rfb-text);
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.rfb-builder-steps__add:hover {
+  border-style: solid;
+  border-color: var(--rfb-primary);
+  color: var(--rfb-primary);
+}
+
+/* ---------- Layout selector (in Form settings panel) ---------- */
+
+.rfb-builder-form-settings__layout {
+  border: 1px solid var(--rfb-border);
+  border-radius: var(--rfb-radius);
+  background: var(--rfb-surface-2);
+  padding: 0.5rem 0.7rem 0.6rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rfb-builder-form-settings__layout legend {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rfb-text-muted);
+  padding: 0 0.25rem;
+}
+
+.rfb-builder-form-settings__layout-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rfb-builder-form-settings__layout-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}

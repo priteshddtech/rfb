@@ -51,6 +51,7 @@ export interface UseFormRendererReturn {
   validate: () => boolean;
   nextPage: () => boolean;
   previousPage: () => boolean;
+  goToPage: (index: number) => boolean;
   submit: () => Promise<SubmitResult>;
   engine: import("@rfb-ddt/core").FormEngine;
 }

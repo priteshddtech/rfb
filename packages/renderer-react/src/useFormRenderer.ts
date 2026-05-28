@@ -82,6 +82,15 @@ export function useFormRenderer(
     return ok;
   }, [engine, bump]);
 
+  const goToPage = useCallback(
+    (index: number) => {
+      const ok = engine.goToPage(index);
+      bump();
+      return ok;
+    },
+    [engine, bump],
+  );
+
   const submit = useCallback(async () => {
     const result = await engine.submit();
     bump();
@@ -106,6 +115,7 @@ export function useFormRenderer(
     validate,
     nextPage,
     previousPage,
+    goToPage,
     submit,
   };
 }

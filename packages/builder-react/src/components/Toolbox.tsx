@@ -1,3 +1,4 @@
+import type { LayoutType } from "@rfb-ddt/schema";
 import { useState } from "react";
 import { DEFAULT_TOOLBOX_FIELDS } from "../constants.js";
 import { IconChevronDown } from "../icons.js";
@@ -14,8 +15,10 @@ export interface ToolboxProps {
   formDescription: string;
   formId: string;
   formVersion: string;
+  layoutType: LayoutType;
   onFormPatch: (patch: { title?: string; description?: string }) => void;
   onMetaPatch: (patch: { id?: string; version?: string }) => void;
+  onLayoutTypeChange: (type: LayoutType) => void;
 }
 
 const GROUP_LABELS: Record<string, string> = {
@@ -49,8 +52,10 @@ export function Toolbox({
   formDescription,
   formId,
   formVersion,
+  layoutType,
   onFormPatch,
   onMetaPatch,
+  onLayoutTypeChange,
 }: ToolboxProps) {
   const groups = fields.reduce<Record<string, ToolboxFieldMeta[]>>(
     (acc, field) => {
@@ -161,6 +166,38 @@ export function Toolbox({
                 onChange={(e) => onFormPatch({ description: e.target.value })}
               />
             </label>
+
+            <fieldset className="rfb-builder-form-settings__layout">
+              <legend>Layout</legend>
+              <div className="rfb-builder-form-settings__layout-options">
+                {(
+                  [
+                    { id: "single", label: "Single page" },
+                    { id: "steps", label: "Multi-step" },
+                    { id: "tabs", label: "Multi-tab" },
+                  ] as { id: LayoutType; label: string }[]
+                ).map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="rfb-builder-form-settings__layout-option"
+                  >
+                    <input
+                      type="radio"
+                      name="rfb-layout-type"
+                      value={opt.id}
+                      checked={layoutType === opt.id}
+                      onChange={() => onLayoutTypeChange(opt.id)}
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="rfb-builder-panel__hint">
+                Steps walks the user through a wizard. Tabs lets them jump
+                between sections freely. All fields are preserved when
+                switching.
+              </p>
+            </fieldset>
           </div>
         )}
 
