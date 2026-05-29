@@ -8,7 +8,6 @@ import type {
 import { runActions } from "../actions/runActions.js";
 import type { ActionContext } from "../actions/types.js";
 import {
-  isFieldActive,
   isFieldDisabled,
   isFieldVisible,
 } from "../conditions/fieldVisibility.js";

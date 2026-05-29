@@ -1,4 +1,5 @@
 import { CheckboxFieldComponent } from "../components/CheckboxField.js";
+import { CheckboxGroupFieldComponent } from "../components/CheckboxGroupField.js";
 import { DateFieldComponent } from "../components/DateField.js";
 import { DividerFieldComponent } from "../components/DividerField.js";
 import { EmailFieldComponent } from "../components/EmailField.js";
@@ -15,6 +16,7 @@ import { PhoneFieldComponent } from "../components/PhoneField.js";
 import { RadioFieldComponent } from "../components/RadioField.js";
 import { RatingFieldComponent } from "../components/RatingField.js";
 import { SelectFieldComponent } from "../components/SelectField.js";
+import { SignatureFieldComponent } from "../components/SignatureField.js";
 import { SliderFieldComponent } from "../components/SliderField.js";
 import { SpacerFieldComponent } from "../components/SpacerField.js";
 import { SpanFieldComponent } from "../components/SpanField.js";
@@ -39,7 +41,9 @@ export const basicFieldComponentMap: Record<string, FieldComponent> = {
   number: NumberFieldComponent as FieldComponent,
   select: SelectFieldComponent as FieldComponent,
   checkbox: CheckboxFieldComponent as FieldComponent,
+  checkboxGroup: CheckboxGroupFieldComponent as FieldComponent,
   radio: RadioFieldComponent as FieldComponent,
+  signature: SignatureFieldComponent as FieldComponent,
   date: DateFieldComponent as FieldComponent,
   hidden: HiddenFieldComponent as FieldComponent,
   html: HtmlBlockFieldComponent as FieldComponent,

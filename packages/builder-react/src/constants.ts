@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from "react";
 import {
   IconCalendar,
   IconCheck,
+  IconChecks,
   IconChevronDown,
   IconClock,
   IconCode,
@@ -18,6 +19,8 @@ import {
   IconParagraph,
   IconPhone,
   IconRadio,
+  IconRichText,
+  IconSignature,
   IconSlider,
   IconSpacer,
   IconStar,
@@ -49,6 +52,12 @@ const META: Record<string, ToolboxMetaConfig> = {
     description: "Multi-line text",
     group: "input",
     icon: IconTextarea,
+  },
+  richtext: {
+    label: "Rich text",
+    description: "WYSIWYG editor",
+    group: "input",
+    icon: IconRichText,
   },
   email: {
     label: "Email",
@@ -104,11 +113,23 @@ const META: Record<string, ToolboxMetaConfig> = {
     group: "choice",
     icon: IconCheck,
   },
+  checkboxGroup: {
+    label: "Checkbox group",
+    description: "Pick many (with image cards)",
+    group: "choice",
+    icon: IconChecks,
+  },
   radio: {
     label: "Radio",
     description: "Choose one option",
     group: "choice",
     icon: IconRadio,
+  },
+  signature: {
+    label: "Signature",
+    description: "Draw a signature",
+    group: "advanced",
+    icon: IconSignature,
   },
   file: {
     label: "File Upload",
@@ -188,17 +209,34 @@ export const FIELD_ICONS: Record<string, FieldIcon> = Object.fromEntries(
   Object.entries(META).map(([type, m]) => [type, m.icon]),
 );
 
-export const DEFAULT_TOOLBOX_FIELDS: ToolboxFieldMeta[] = BASIC_FIELD_TYPES.map(
-  (type) => {
+/**
+ * Virtual toolbox types — these don't have a unique field-type in the schema,
+ * they map to existing types with preset flags (e.g. `richtext` -> textarea
+ * with `richText: true`). They're inserted into the toolbox manually after
+ * the base list.
+ */
+const VIRTUAL_TOOLBOX_TYPES = ["richtext"] as const;
+
+export const DEFAULT_TOOLBOX_FIELDS: ToolboxFieldMeta[] = [
+  ...BASIC_FIELD_TYPES.map((type) => {
     const m = META[type];
     return {
-      type,
+      type: type as string,
       label: m?.label ?? type,
       description: m?.description,
       group: m?.group ?? "advanced",
     };
-  },
-);
+  }),
+  ...VIRTUAL_TOOLBOX_TYPES.map((type) => {
+    const m = META[type];
+    return {
+      type: type as string,
+      label: m?.label ?? type,
+      description: m?.description,
+      group: m?.group ?? "advanced",
+    };
+  }),
+];
 
 export const TOOLBOX_DRAG_PREFIX = "toolbox:";
 

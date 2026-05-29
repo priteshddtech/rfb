@@ -266,3 +266,577 @@
   width: 100%;
   pointer-events: none;
 }
+
+/* ---------- Radio with images / cards ---------- */
+
+.rfb-radio-group--list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rfb-radio-group--grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.rfb-radio-group--cards .rfb-radio {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  padding: 0.75rem;
+  align-items: flex-start;
+  background: #fff;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.rfb-radio-group--cards .rfb-radio:hover:not(.rfb-radio--disabled) {
+  border-color: #93c5fd;
+}
+
+.rfb-radio--selected {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+  box-shadow: 0 0 0 1px #3b82f6 inset;
+}
+
+.rfb-radio--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rfb-radio__media {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f4f4f5;
+  margin-bottom: 0.4rem;
+}
+
+.rfb-radio__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rfb-radio--card {
+  flex-direction: column;
+}
+
+.rfb-radio--card .rfb-radio__input {
+  align-self: flex-start;
+}
+
+.rfb-radio__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rfb-radio__label {
+  font-weight: 500;
+  color: #18181b;
+}
+
+.rfb-radio__description {
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* ---------- Checkbox group (multi-checkbox) ---------- */
+
+.rfb-checkbox-group--list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rfb-checkbox-group--grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.rfb-checkbox-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.rfb-checkbox-card:hover:not(.rfb-checkbox-card--disabled) {
+  border-color: #93c5fd;
+}
+
+.rfb-checkbox-card--selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #3b82f6 inset;
+}
+
+.rfb-checkbox-card--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rfb-checkbox-card__input {
+  position: absolute;
+  inset: auto auto auto 0.6rem;
+  top: 0.6rem;
+  margin: 0;
+}
+
+.rfb-checkbox-card--image .rfb-checkbox-card__input {
+  top: 0.5rem;
+  left: 0.5rem;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.rfb-checkbox-card__media {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f4f4f5;
+}
+
+.rfb-checkbox-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rfb-checkbox-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-left: 1.5rem;
+}
+
+.rfb-checkbox-card--image .rfb-checkbox-card__body {
+  padding-left: 0;
+}
+
+.rfb-checkbox-card__label {
+  font-weight: 500;
+  color: #18181b;
+}
+
+.rfb-checkbox-card__description {
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.rfb-checkbox-card__check {
+  display: none;
+}
+
+/* ---------- Combobox (searchable / multi-select) ---------- */
+
+.rfb-combobox {
+  position: relative;
+  width: 100%;
+}
+
+.rfb-combobox__control {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-height: 38px;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  background: #fff;
+  cursor: text;
+  box-sizing: border-box;
+}
+
+.rfb-combobox--open .rfb-combobox__control,
+.rfb-combobox__control:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 0;
+  border-color: #3b82f6;
+}
+
+.rfb-combobox--error .rfb-combobox__control {
+  border-color: #b42318;
+}
+
+.rfb-combobox--disabled .rfb-combobox__control {
+  background: #f4f4f5;
+  cursor: not-allowed;
+}
+
+.rfb-combobox__values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rfb-combobox__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.45rem;
+  background: #e0e7ff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #1e3a8a;
+  max-width: 100%;
+}
+
+.rfb-combobox__chip-image {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.rfb-combobox__chip-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+.rfb-combobox__chip-remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  border-radius: 3px;
+}
+
+.rfb-combobox__chip-remove:hover {
+  background: rgba(30, 58, 138, 0.15);
+}
+
+.rfb-combobox__single {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #18181b;
+}
+
+.rfb-combobox__single-image {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.rfb-combobox__input {
+  flex: 1;
+  min-width: 4ch;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  padding: 0.25rem 0.15rem;
+  color: inherit;
+}
+
+.rfb-combobox__input:disabled {
+  cursor: not-allowed;
+}
+
+.rfb-combobox__indicators {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #6b7280;
+  padding-left: 0.25rem;
+}
+
+.rfb-combobox__clear,
+.rfb-combobox__caret {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: inherit;
+  padding: 0 0.25rem;
+}
+
+.rfb-combobox__clear:hover {
+  color: #b42318;
+}
+
+.rfb-combobox__menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.rfb-combobox__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #18181b;
+}
+
+.rfb-combobox__option--active {
+  background: #eff6ff;
+}
+
+.rfb-combobox__option--selected {
+  background: #e0e7ff;
+  color: #1e3a8a;
+}
+
+.rfb-combobox__option--selected.rfb-combobox__option--active {
+  background: #c7d2fe;
+}
+
+.rfb-combobox__option--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rfb-combobox__check {
+  width: 1rem;
+  text-align: center;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.rfb-combobox__option-image {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.rfb-combobox__option-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rfb-combobox__option-label {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rfb-combobox__option-description {
+  font-size: 0.78rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rfb-combobox__empty,
+.rfb-combobox__create {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.rfb-combobox__create {
+  font-style: normal;
+  color: #1e3a8a;
+  cursor: pointer;
+}
+
+.rfb-combobox__create:hover {
+  background: #eff6ff;
+}
+
+/* ---------- Signature pad ---------- */
+
+.rfb-signature {
+  position: relative;
+  width: 100%;
+}
+
+.rfb-signature__canvas {
+  display: block;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  cursor: crosshair;
+  width: 100%;
+  touch-action: none;
+}
+
+.rfb-signature--disabled .rfb-signature__canvas {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rfb-signature__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.rfb-signature__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+
+.rfb-signature__clear {
+  background: transparent;
+  border: 1px solid #d4d4d8;
+  border-radius: 4px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.rfb-signature__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rfb-signature__clear:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b42318;
+}
+
+/* ---------- Rich text editor ---------- */
+
+.rfb-richtext {
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rfb-richtext--invalid {
+  border-color: #b42318;
+}
+
+.rfb-richtext--disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.rfb-richtext__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding: 0.3rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.rfb-richtext__btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 0.45rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  color: #18181b;
+}
+
+.rfb-richtext__btn:hover {
+  background: #fff;
+  border-color: #d4d4d8;
+}
+
+.rfb-richtext__btn:active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.rfb-richtext__editor {
+  min-height: 96px;
+  padding: 0.6rem 0.75rem;
+  outline: none;
+  font: inherit;
+  line-height: 1.55;
+  overflow: auto;
+}
+
+.rfb-richtext__editor:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.rfb-richtext__editor[data-empty]::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  display: block;
+}
+
+.rfb-richtext__editor h1,
+.rfb-richtext__editor h2,
+.rfb-richtext__editor h3 {
+  margin: 0.3rem 0 0.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rfb-richtext__editor h1 { font-size: 1.5rem; }
+.rfb-richtext__editor h2 { font-size: 1.25rem; }
+.rfb-richtext__editor h3 { font-size: 1.1rem; }
+
+.rfb-richtext__editor p {
+  margin: 0 0 0.5rem;
+}
+
+.rfb-richtext__editor ul,
+.rfb-richtext__editor ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.rfb-richtext__editor a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

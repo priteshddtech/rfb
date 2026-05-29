@@ -1,4 +1,5 @@
 import type { SelectField as SelectFieldSchema } from "@rfb-ddt/schema";
+import { ComboboxSelect } from "./ComboboxSelect.js";
 import { FieldWrapper, fieldControlId } from "../FieldWrapper.js";
 import { useRemoteOptions } from "../hooks/useRemoteOptions.js";
 import type { FieldComponentProps } from "../types.js";
@@ -29,51 +30,37 @@ export function SelectFieldComponent({
   const loadError = dynamicOptions ? null : remote.error;
 
   const isApi = field.optionsSource?.type === "api";
+  const useCombobox = !!(field.multiple || field.searchable || field.creatable);
+
+  if (useCombobox) {
+    return (
+      <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={id}>
+        <ComboboxSelect
+          field={field}
+          controlId={id}
+          options={options}
+          value={value}
+          loading={loading}
+          disabled={disabled}
+          readOnly={readOnly}
+          error={!!error}
+          onChange={onChange}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          onClick={onClick}
+        />
+        {isApi && preview && options.length === 0 && (
+          <p className="rfb-field__hint">Loaded from API at runtime</p>
+        )}
+      </FieldWrapper>
+    );
+  }
+
   const apiPlaceholder = isApi && preview
     ? `Loaded from API: ${field.optionsSource?.type === "api" ? field.optionsSource.url || "—" : ""}`
     : loading
       ? "Loading options…"
       : null;
-
-  if (field.multiple) {
-    const selected = Array.isArray(value)
-      ? value.map(String)
-      : value == null
-        ? []
-        : [String(value)];
-
-    return (
-      <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={id}>
-        <select
-          id={id}
-          name={field.name}
-          className="rfb-select"
-          multiple
-          disabled={disabled || readOnly || loading}
-          value={selected}
-          aria-invalid={error ? true : undefined}
-          onChange={(e) => {
-            const values = Array.from(e.target.selectedOptions).map(
-              (opt) => opt.value,
-            );
-            onChange(values);
-          }}
-          onBlur={onBlur}
-          onFocus={onFocus}
-          onClick={onClick}
-        >
-          {options.map((opt) => (
-            <option key={String(opt.value)} value={String(opt.value)}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        {apiPlaceholder && (
-          <p className="rfb-field__hint">{apiPlaceholder}</p>
-        )}
-      </FieldWrapper>
-    );
-  }
 
   const stringValue = value == null ? "" : String(value);
 
@@ -95,7 +82,7 @@ export function SelectFieldComponent({
           {apiPlaceholder ?? field.placeholder ?? "Select…"}
         </option>
         {options.map((opt) => (
-          <option key={String(opt.value)} value={String(opt.value)}>
+          <option key={String(opt.value)} value={String(opt.value)} disabled={opt.disabled}>
             {opt.label}
           </option>
         ))}

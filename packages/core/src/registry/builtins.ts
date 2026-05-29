@@ -46,6 +46,17 @@ const builtinDefinitions: FieldTypeDefinition[] = [
     getDefaultValue: (field: FormField) => field.defaultValue ?? false,
   },
   inputDefinition("radio"),
+  {
+    type: "checkboxGroup",
+    isInput: true,
+    getDefaultValue: (field: FormField) =>
+      (field.defaultValue as unknown[] | undefined) ?? [],
+  },
+  {
+    type: "signature",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? "",
+  },
   inputDefinition("date"),
   {
     type: "hidden",

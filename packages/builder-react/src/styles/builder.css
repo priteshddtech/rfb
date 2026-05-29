@@ -970,6 +970,99 @@
   color: var(--rfb-danger);
 }
 
+/* ---------- Option cards (with image / description / disabled) ---------- */
+
+.rfb-builder-properties__options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.rfb-builder-properties__option-card {
+  border: 1px solid var(--rfb-border);
+  border-radius: 6px;
+  background: var(--rfb-surface);
+  overflow: hidden;
+}
+
+.rfb-builder-properties__option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.4rem;
+}
+
+.rfb-builder-properties__option-row > input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--rfb-border);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.78rem;
+  background: var(--rfb-surface);
+}
+
+.rfb-builder-properties__option-row > input:focus {
+  outline: 2px solid var(--rfb-primary);
+  outline-offset: -1px;
+  border-color: var(--rfb-primary);
+}
+
+.rfb-builder-properties__option-thumb {
+  display: inline-block;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f4f4f5;
+  border: 1px solid var(--rfb-border);
+}
+
+.rfb-builder-properties__option-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rfb-builder-properties__option-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--rfb-text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.rfb-builder-properties__option-toggle:hover {
+  border-color: var(--rfb-border);
+  background: var(--rfb-surface-2, #f9fafb);
+}
+
+.rfb-builder-properties__option-extras {
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-top: 1px dashed var(--rfb-border);
+  background: var(--rfb-surface-2, #f9fafb);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Legacy 3-column option row kept for any callers still using it */
+.rfb-builder-properties__options-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 26px;
+  gap: 0.3rem;
+  align-items: center;
+}
+
 /* ---------- JSON / Preview panel ---------- */
 
 .rfb-builder__json {

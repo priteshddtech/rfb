@@ -1,6 +1,6 @@
 import { BasicField } from "@rfb-ddt/field-pack-basic";
 import "@rfb-ddt/field-pack-basic/styles.css";
-import type { FormResponse, FormSchema } from "@rfb-ddt/schema";
+import type { FormResponse } from "@rfb-ddt/schema";
 import {
   useState,
   type CSSProperties,

@@ -1,9 +1,18 @@
-import type { RadioField as RadioFieldSchema, SelectOption } from "@rfb-ddt/schema";
+import type {
+  CheckboxGroupField as CheckboxGroupFieldSchema,
+  SelectOption,
+} from "@rfb-ddt/schema";
 import { FieldWrapper, fieldControlId } from "../FieldWrapper.js";
 import { useRemoteOptions } from "../hooks/useRemoteOptions.js";
 import type { FieldComponentProps } from "../types.js";
 
-export function RadioFieldComponent({
+function toArrayValue(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((v) => String(v));
+  if (value == null || value === "") return [];
+  return [String(value)];
+}
+
+export function CheckboxGroupFieldComponent({
   field,
   value,
   onChange,
@@ -15,9 +24,9 @@ export function RadioFieldComponent({
   readOnly,
   preview,
   dynamicOptions,
-}: FieldComponentProps<RadioFieldSchema>) {
+}: FieldComponentProps<CheckboxGroupFieldSchema>) {
   const groupId = fieldControlId(field.id);
-  const stringValue = value == null ? "" : String(value);
+  const selected = toArrayValue(value);
 
   const remote = useRemoteOptions(
     field.optionsSource,
@@ -27,17 +36,32 @@ export function RadioFieldComponent({
   const options: SelectOption[] = dynamicOptions ?? remote.options;
   const loading = dynamicOptions ? false : remote.loading;
   const loadError = dynamicOptions ? null : remote.error;
-
   const isApi = field.optionsSource?.type === "api";
+
   const display = field.display ?? "list";
   const hasImages = options.some((opt) => opt.image);
   const columns = field.columns ?? (hasImages ? 3 : 2);
 
+  const toggle = (rawValue: SelectOption["value"]) => {
+    const str = String(rawValue);
+    const next = selected.includes(str)
+      ? selected.filter((v) => v !== str)
+      : [...selected, str];
+    if (
+      field.maxSelected != null &&
+      next.length > field.maxSelected &&
+      !selected.includes(str)
+    ) {
+      return;
+    }
+    onChange(next);
+  };
+
   return (
     <FieldWrapper field={field} error={error ?? loadError ?? undefined} controlId={groupId}>
       <div
-        className={`rfb-radio-group rfb-radio-group--${display}${hasImages ? " rfb-radio-group--cards" : ""}`}
-        role="radiogroup"
+        className={`rfb-checkbox-group rfb-checkbox-group--${display}${hasImages ? " rfb-checkbox-group--cards" : ""}`}
+        role="group"
         aria-invalid={error ? true : undefined}
         style={display === "grid"
           ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }
@@ -53,29 +77,34 @@ export function RadioFieldComponent({
         )}
         {options.map((opt) => {
           const optionId = `${groupId}-${String(opt.value)}`;
-          const isSelected = stringValue === String(opt.value);
-          const optionDisabled = disabled || readOnly || loading || opt.disabled;
+          const isSelected = selected.includes(String(opt.value));
+          const reachedMax =
+            field.maxSelected != null &&
+            selected.length >= field.maxSelected &&
+            !isSelected;
+          const optionDisabled =
+            disabled || readOnly || loading || opt.disabled || reachedMax;
           return (
             <label
               key={optionId}
-              className={`rfb-radio${opt.image ? " rfb-radio--card" : ""}${isSelected ? " rfb-radio--selected" : ""}${optionDisabled ? " rfb-radio--disabled" : ""}`}
+              className={`rfb-checkbox-card${opt.image ? " rfb-checkbox-card--image" : ""}${isSelected ? " rfb-checkbox-card--selected" : ""}${optionDisabled ? " rfb-checkbox-card--disabled" : ""}`}
               htmlFor={optionId}
             >
               <input
                 id={optionId}
                 name={field.name}
-                type="radio"
-                className="rfb-radio__input"
+                type="checkbox"
+                className="rfb-checkbox-card__input"
                 value={String(opt.value)}
                 checked={isSelected}
                 disabled={optionDisabled}
-                onChange={() => onChange(opt.value)}
+                onChange={() => toggle(opt.value)}
                 onBlur={onBlur}
                 onFocus={onFocus}
                 onClick={onClick}
               />
               {opt.image && (
-                <span className="rfb-radio__media">
+                <span className="rfb-checkbox-card__media">
                   <img
                     src={opt.image}
                     alt={opt.imageAlt ?? opt.label}
@@ -83,12 +112,15 @@ export function RadioFieldComponent({
                   />
                 </span>
               )}
-              <span className="rfb-radio__body">
-                <span className="rfb-radio__label">{opt.label}</span>
+              <span className="rfb-checkbox-card__body">
+                <span className="rfb-checkbox-card__label">{opt.label}</span>
                 {opt.description && (
-                  <span className="rfb-radio__description">{opt.description}</span>
+                  <span className="rfb-checkbox-card__description">
+                    {opt.description}
+                  </span>
                 )}
               </span>
+              <span className="rfb-checkbox-card__check" aria-hidden="true" />
             </label>
           );
         })}

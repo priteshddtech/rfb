@@ -195,7 +195,25 @@ export interface TextareaField extends FieldBase {
   type: "textarea";
   rows?: number;
   maxLength?: number;
+  /** When true, render a lightweight rich-text editor instead of a plain textarea. */
+  richText?: boolean;
+  /** Subset of toolbar buttons to expose when `richText` is true. */
+  richTextToolbar?: RichTextToolbarButton[];
 }
+
+export type RichTextToolbarButton =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "paragraph"
+  | "ul"
+  | "ol"
+  | "link"
+  | "clear";
 
 export interface EmailField extends FieldBase {
   type: "email";
@@ -254,6 +272,14 @@ export interface NumberField extends FieldBase {
 export interface SelectOption {
   label: string;
   value: string | number | boolean;
+  /** Optional thumbnail image displayed alongside or above the label. */
+  image?: string;
+  /** Alt text for `image`. Defaults to `label`. */
+  imageAlt?: string;
+  /** Secondary descriptive text shown under the label (card layouts). */
+  description?: string;
+  /** Disable a single option without removing it from the list. */
+  disabled?: boolean;
 }
 
 /**
@@ -291,6 +317,10 @@ export interface SelectField extends FieldBase {
   options: SelectOption[];
   optionsSource?: OptionsSource;
   multiple?: boolean;
+  /** Enable typeahead filter input + custom dropdown. */
+  searchable?: boolean;
+  /** Allow the user to add free-text values not in the option list. */
+  creatable?: boolean;
 }
 
 export interface CheckboxField extends FieldBase {
@@ -301,6 +331,22 @@ export interface RadioField extends FieldBase {
   type: "radio";
   options: SelectOption[];
   optionsSource?: OptionsSource;
+  /** Layout for the option list. `list` = stacked, `grid` = card grid (works well with images). */
+  display?: "list" | "grid";
+  /** Approximate number of columns when `display === "grid"`. */
+  columns?: number;
+}
+
+export interface CheckboxGroupField extends FieldBase {
+  type: "checkboxGroup";
+  options: SelectOption[];
+  optionsSource?: OptionsSource;
+  display?: "list" | "grid";
+  columns?: number;
+  /** Minimum number of selections required. */
+  minSelected?: number;
+  /** Maximum number of selections allowed. */
+  maxSelected?: number;
 }
 
 export interface DateField extends FieldBase {
@@ -366,6 +412,23 @@ export interface SpacerField extends FieldBase {
   height?: number;
 }
 
+/** Canvas-based signature pad. The value is a base64-encoded PNG data URL. */
+export interface SignatureField extends FieldBase {
+  type: "signature";
+  /** Canvas width in CSS px. Defaults to `null` which means fill container. */
+  width?: number;
+  /** Canvas height in CSS px. Defaults to 160. */
+  height?: number;
+  /** Stroke color used when drawing. Defaults to `#111827`. */
+  penColor?: string;
+  /** Stroke width in px. Defaults to 2. */
+  penWidth?: number;
+  /** Pad background color. Defaults to `#ffffff`. */
+  backgroundColor?: string;
+  /** Show a clear button under the pad. Defaults to true. */
+  clearable?: boolean;
+}
+
 /**
  * Built-in field types. Field packs can add more via `CustomField`
  * or by extending the union in their own package.
@@ -385,6 +448,7 @@ export type BuiltinFormField =
   | SelectField
   | CheckboxField
   | RadioField
+  | CheckboxGroupField
   | DateField
   | HiddenField
   | HtmlBlockField
@@ -394,7 +458,8 @@ export type BuiltinFormField =
   | ImageField
   | ParagraphField
   | DividerField
-  | SpacerField;
+  | SpacerField
+  | SignatureField;
 
 /** Any field, including plugin-defined `type` values. */
 export type FormField = BuiltinFormField | CustomField;

@@ -42,6 +42,18 @@ export function createDefaultField(
   switch (type) {
     case "textarea":
       return { ...base, type: "textarea", rows: 4 };
+    case "richtext": {
+      const richName = uniqueFieldName("richtext", existingFields);
+      return {
+        ...base,
+        type: "textarea",
+        name: richName,
+        dbField: richName,
+        label: "Rich text",
+        rows: 6,
+        richText: true,
+      };
+    }
     case "email":
       return {
         ...base,
@@ -89,6 +101,29 @@ export function createDefaultField(
         type: "checkbox",
         defaultValue: false,
         props: { ...base.props, gridSpan: 6 },
+      };
+    case "checkboxGroup":
+      return {
+        ...base,
+        type: "checkboxGroup",
+        label: "Checkbox group",
+        defaultValue: [],
+        display: "list",
+        options: [
+          { label: "Option 1", value: "option1" },
+          { label: "Option 2", value: "option2" },
+        ],
+      };
+    case "signature":
+      return {
+        ...base,
+        type: "signature",
+        label: "Signature",
+        height: 160,
+        penColor: "#111827",
+        penWidth: 2,
+        backgroundColor: "#ffffff",
+        clearable: true,
       };
     case "date":
       return { ...base, type: "date" };

@@ -242,3 +242,32 @@ export const IconLayers = (p: IconProps) => (
     <path d="m3 17 9 5 9-5" />
   </svg>
 );
+export const IconChecks = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="8" height="8" rx="1.5" />
+    <path d="m5 7 1.5 1.5L9 6" />
+    <rect x="13" y="3" width="8" height="8" rx="1.5" />
+    <path d="m15 7 1.5 1.5L19 6" />
+    <rect x="3" y="13" width="8" height="8" rx="1.5" />
+    <path d="m5 17 1.5 1.5L9 16" />
+  </svg>
+);
+export const IconSignature = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M3 18c2-2 4-6 6-6s1 5 3 5 3-7 5-7 1 6 4 4" />
+    <path d="M3 21h18" />
+  </svg>
+);
+export const IconRichText = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M7 8h3M7 12h7M7 16h5" />
+    <path d="M17 8v8M15 8h4" />
+  </svg>
+);
+export const IconSearch = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+);

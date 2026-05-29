@@ -40,12 +40,16 @@ function previewValueFor(field: FormField): unknown {
   switch (field.type) {
     case "checkbox":
       return false;
+    case "checkboxGroup":
+      return [];
     case "rating":
     case "slider":
     case "number":
       return "";
     case "file":
       return null;
+    case "signature":
+      return "";
     default:
       return "";
   }

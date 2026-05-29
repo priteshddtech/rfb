@@ -47,7 +47,7 @@ const TEXT_LIKE_TYPES = new Set([
   "url",
 ]);
 
-const OPTION_TYPES = new Set(["select", "radio"]);
+const OPTION_TYPES = new Set(["select", "radio", "checkboxGroup"]);
 
 /** Static / presentational fields don't submit data and have a custom config UI. */
 const STATIC_TYPES = new Set([
@@ -330,6 +330,7 @@ export function PropertyPanel({
             )}
 
             <StaticFieldControls field={field} onChange={onChange} />
+            <TypeSpecificControls field={field} onChange={onChange} />
 
             {supportsLength && (
               <div className="rfb-builder-properties__row">
@@ -514,44 +515,20 @@ function OptionsEditor({
 
       {mode === "static" && (
         <>
-          <div className="rfb-builder-properties__options-table">
-            <div className="rfb-builder-properties__options-row rfb-builder-properties__options-row--head">
-              <span>Label</span>
-              <span>Value</span>
-              <span aria-hidden="true" />
-            </div>
+          <div className="rfb-builder-properties__options-list">
             {options.length === 0 && (
               <p className="rfb-builder-panel__hint">
                 No options yet. Add one below.
               </p>
             )}
             {options.map((opt, index) => (
-              <div key={index} className="rfb-builder-properties__options-row">
-                <input
-                  type="text"
-                  value={opt.label}
-                  onChange={(e) =>
-                    onUpdateOption(index, { label: e.target.value })
-                  }
-                  placeholder={`Option ${index + 1}`}
-                />
-                <input
-                  type="text"
-                  value={String(opt.value)}
-                  onChange={(e) =>
-                    onUpdateOption(index, { value: e.target.value })
-                  }
-                  placeholder={`option${index + 1}`}
-                />
-                <button
-                  type="button"
-                  className="rfb-builder-properties__option-remove"
-                  aria-label="Remove option"
-                  onClick={() => onRemoveOption(index)}
-                >
-                  <IconTrash />
-                </button>
-              </div>
+              <OptionRow
+                key={index}
+                option={opt}
+                index={index}
+                onUpdate={(patch) => onUpdateOption(index, patch)}
+                onRemove={() => onRemoveOption(index)}
+              />
             ))}
           </div>
           <button
@@ -795,6 +772,402 @@ function readJsonPath(value: unknown, path?: string): unknown {
     }
   }
   return current;
+}
+
+/* ---------- Single option row (with optional image / description) ---------- */
+
+interface OptionRowProps {
+  option: SelectOption;
+  index: number;
+  onUpdate: (patch: Partial<SelectOption>) => void;
+  onRemove: () => void;
+}
+
+function OptionRow({ option, index, onUpdate, onRemove }: OptionRowProps) {
+  const [expanded, setExpanded] = useState<boolean>(
+    !!(option.image || option.description || option.disabled),
+  );
+
+  return (
+    <div className="rfb-builder-properties__option-card">
+      <div className="rfb-builder-properties__option-row">
+        {option.image && (
+          <span className="rfb-builder-properties__option-thumb" aria-hidden="true">
+            <img src={option.image} alt="" />
+          </span>
+        )}
+        <input
+          type="text"
+          value={option.label}
+          onChange={(e) => onUpdate({ label: e.target.value })}
+          placeholder={`Option ${index + 1}`}
+          aria-label="Option label"
+        />
+        <input
+          type="text"
+          value={String(option.value)}
+          onChange={(e) => onUpdate({ value: e.target.value })}
+          placeholder={`option${index + 1}`}
+          aria-label="Option value"
+        />
+        <button
+          type="button"
+          className="rfb-builder-properties__option-toggle"
+          aria-label={expanded ? "Hide extras" : "Show extras"}
+          title="Image / description / disabled"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "▾" : "▸"}
+        </button>
+        <button
+          type="button"
+          className="rfb-builder-properties__option-remove"
+          aria-label="Remove option"
+          onClick={onRemove}
+        >
+          <IconTrash />
+        </button>
+      </div>
+      {expanded && (
+        <div className="rfb-builder-properties__option-extras">
+          <label className="rfb-builder-properties__field">
+            <span>Image URL</span>
+            <input
+              type="text"
+              value={option.image ?? ""}
+              placeholder="https://… (leave empty for text-only option)"
+              onChange={(e) =>
+                onUpdate({ image: e.target.value || undefined })
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Image alt</span>
+            <input
+              type="text"
+              value={option.imageAlt ?? ""}
+              placeholder={option.label}
+              onChange={(e) =>
+                onUpdate({ imageAlt: e.target.value || undefined })
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Description</span>
+            <input
+              type="text"
+              value={option.description ?? ""}
+              placeholder="Secondary descriptive text"
+              onChange={(e) =>
+                onUpdate({ description: e.target.value || undefined })
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={!!option.disabled}
+              onChange={(e) =>
+                onUpdate({ disabled: e.target.checked || undefined })
+              }
+            />
+            Disabled
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Type-specific advanced controls ---------- */
+
+interface TypeSpecificControlsProps {
+  field: FormField;
+  onChange: (patch: Partial<FormField>) => void;
+}
+
+function TypeSpecificControls({ field, onChange }: TypeSpecificControlsProps) {
+  if (field.type === "select") {
+    const sel = field as { multiple?: boolean; searchable?: boolean; creatable?: boolean };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Dropdown behaviour</h4>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!sel.multiple}
+            onChange={(e) =>
+              onChange({ multiple: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Allow multiple selection
+        </label>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={sel.searchable !== false}
+            onChange={(e) =>
+              onChange({ searchable: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Searchable (typeahead filter)
+        </label>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!sel.creatable}
+            onChange={(e) =>
+              onChange({ creatable: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Allow user to add custom values
+        </label>
+        <p className="rfb-builder-panel__hint">
+          Enabling multi-select, searchable, or creatable swaps the native
+          <code> &lt;select&gt; </code>
+          for a custom combobox with chips and keyboard navigation.
+        </p>
+      </section>
+    );
+  }
+
+  if (field.type === "radio" || field.type === "checkboxGroup") {
+    const f = field as {
+      display?: "list" | "grid";
+      columns?: number;
+      maxSelected?: number;
+      minSelected?: number;
+    };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Layout</h4>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Display</span>
+            <select
+              className="rfb-builder-properties__select"
+              value={f.display ?? "list"}
+              onChange={(e) =>
+                onChange({
+                  display: e.target.value as "list" | "grid",
+                } as Partial<FormField>)
+              }
+            >
+              <option value="list">List (stacked)</option>
+              <option value="grid">Grid (cards)</option>
+            </select>
+          </label>
+          {f.display === "grid" && (
+            <label className="rfb-builder-properties__field">
+              <span>Columns</span>
+              <input
+                type="number"
+                min={1}
+                max={6}
+                value={f.columns ?? 3}
+                onChange={(e) =>
+                  onChange({
+                    columns: Math.max(1, Math.min(6, Number(e.target.value) || 1)),
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+          )}
+        </div>
+        <p className="rfb-builder-panel__hint">
+          Add an <strong>Image URL</strong> to any option above to render image
+          cards. Grid layout works best when every option has an image.
+        </p>
+        {field.type === "checkboxGroup" && (
+          <div className="rfb-builder-properties__row">
+            <label className="rfb-builder-properties__field">
+              <span>Min selected</span>
+              <input
+                type="number"
+                min={0}
+                value={f.minSelected ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    minSelected: e.target.value
+                      ? Math.max(0, Number(e.target.value))
+                      : undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+            <label className="rfb-builder-properties__field">
+              <span>Max selected</span>
+              <input
+                type="number"
+                min={0}
+                value={f.maxSelected ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    maxSelected: e.target.value
+                      ? Math.max(0, Number(e.target.value))
+                      : undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (field.type === "textarea") {
+    const f = field as { richText?: boolean; rows?: number };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Textarea</h4>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!f.richText}
+            onChange={(e) =>
+              onChange({ richText: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Rich text editor (WYSIWYG)
+        </label>
+        {!f.richText && (
+          <label className="rfb-builder-properties__field">
+            <span>Rows</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={f.rows ?? 3}
+              onChange={(e) =>
+                onChange({
+                  rows: Math.max(1, Math.min(20, Number(e.target.value) || 1)),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+        )}
+        <p className="rfb-builder-panel__hint">
+          When enabled, the textarea becomes a contenteditable editor with bold,
+          italic, headings, lists and links. The submitted value is HTML.
+        </p>
+      </section>
+    );
+  }
+
+  if (field.type === "signature") {
+    const f = field as {
+      width?: number;
+      height?: number;
+      penColor?: string;
+      penWidth?: number;
+      backgroundColor?: string;
+      clearable?: boolean;
+    };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Signature pad</h4>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Width (px, blank = fill)</span>
+            <input
+              type="number"
+              min={0}
+              value={f.width ?? ""}
+              onChange={(e) =>
+                onChange({
+                  width: e.target.value ? Number(e.target.value) : undefined,
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Height (px)</span>
+            <input
+              type="number"
+              min={40}
+              value={f.height ?? 160}
+              onChange={(e) =>
+                onChange({
+                  height: Math.max(40, Number(e.target.value) || 160),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Pen color</span>
+            <div className="rfb-builder-properties__color">
+              <input
+                type="color"
+                value={f.penColor ?? "#111827"}
+                onChange={(e) =>
+                  onChange({ penColor: e.target.value } as Partial<FormField>)
+                }
+              />
+              <input
+                type="text"
+                value={f.penColor ?? "#111827"}
+                onChange={(e) =>
+                  onChange({ penColor: e.target.value } as Partial<FormField>)
+                }
+              />
+            </div>
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Pen width (px)</span>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={f.penWidth ?? 2}
+              onChange={(e) =>
+                onChange({
+                  penWidth: Math.max(1, Math.min(10, Number(e.target.value) || 1)),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+        <label className="rfb-builder-properties__field">
+          <span>Background color</span>
+          <div className="rfb-builder-properties__color">
+            <input
+              type="color"
+              value={f.backgroundColor ?? "#ffffff"}
+              onChange={(e) =>
+                onChange({
+                  backgroundColor: e.target.value,
+                } as Partial<FormField>)
+              }
+            />
+            <input
+              type="text"
+              value={f.backgroundColor ?? "#ffffff"}
+              onChange={(e) =>
+                onChange({
+                  backgroundColor: e.target.value,
+                } as Partial<FormField>)
+              }
+            />
+          </div>
+        </label>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={f.clearable !== false}
+            onChange={(e) =>
+              onChange({ clearable: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Show clear button
+        </label>
+      </section>
+    );
+  }
+
+  return null;
 }
 
 /* ---------- Static / presentational field controls ---------- */
@@ -1960,9 +2333,9 @@ function LoadOptionsEditor({
   otherFields,
   onChange,
 }: LoadOptionsEditorProps) {
-  // Only select / radio fields can receive options.
+  // Only select / radio / checkboxGroup fields can receive options.
   const targetableFields = otherFields.filter(
-    (f) => f.type === "select" || f.type === "radio",
+    (f) => f.type === "select" || f.type === "radio" || f.type === "checkboxGroup",
   );
 
   function patchSource(p: Partial<OptionsSourceApi>) {
@@ -1972,7 +2345,7 @@ function LoadOptionsEditor({
   return (
     <>
       <TargetsPicker
-        label="Target select / radio fields"
+        label="Target select / radio / checkbox group fields"
         value={action.targets}
         fields={targetableFields}
         onChange={(targets) => onChange({ ...action, targets })}
