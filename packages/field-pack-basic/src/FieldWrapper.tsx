@@ -49,12 +49,12 @@ export function FieldWrapper({
           )}
         </label>
       )}
+      <div className="rfb-field__control">{children}</div>
       {field.description && (
         <p className="rfb-field__description" id={`${controlId}-desc`}>
           {field.description}
         </p>
       )}
-      <div className="rfb-field__control">{children}</div>
       {error && (
         <p className="rfb-field__error" role="alert" id={`${controlId}-error`}>
           {error}
