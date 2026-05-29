@@ -1,4 +1,4 @@
-import type { FormField } from "@rfb-ddt/schema";
+import type { FormField, SelectOption } from "@rfb-ddt/schema";
 import type { ComponentType } from "react";
 
 export interface FieldComponentProps<
@@ -8,6 +8,8 @@ export interface FieldComponentProps<
   value: unknown;
   onChange: (value: unknown) => void;
   onBlur?: () => void;
+  onFocus?: () => void;
+  onClick?: () => void;
   error?: string;
   disabled?: boolean;
   readOnly?: boolean;
@@ -16,6 +18,12 @@ export interface FieldComponentProps<
    * the builder canvas) and should avoid side effects such as remote fetches.
    */
   preview?: boolean;
+  /**
+   * Optional dynamic options that override the field's own static / api
+   * options. Used by the actions engine (e.g. `loadOptions` populating a
+   * dependent dropdown).
+   */
+  dynamicOptions?: SelectOption[];
 }
 
 export type FieldComponent<TField extends FormField = FormField> =

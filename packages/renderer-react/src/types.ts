@@ -4,7 +4,12 @@ import type {
   SubmitResult,
 } from "@rfb-ddt/core";
 import type { ReactFieldRegistry } from "@rfb-ddt/field-pack-basic";
-import type { FormResponse, FormSchema, LayoutType } from "@rfb-ddt/schema";
+import type {
+  FieldEvent,
+  FormResponse,
+  FormSchema,
+  LayoutType,
+} from "@rfb-ddt/schema";
 
 export interface FormRendererProps {
   schema: FormSchema;
@@ -62,5 +67,7 @@ export interface UseFormRendererReturn {
   previousPage: () => boolean;
   goToPage: (index: number) => boolean;
   submit: () => Promise<SubmitResult>;
+  /** Imperatively trigger a field event (e.g. from external code). */
+  triggerEvent: (fieldId: string, event: FieldEvent) => Promise<void>;
   engine: import("@rfb-ddt/core").FormEngine;
 }

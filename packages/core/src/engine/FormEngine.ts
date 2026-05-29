@@ -1,6 +1,15 @@
-import type { FormField, FormResponse, FormSchema } from "@rfb-ddt/schema";
+import type {
+  FieldEvent,
+  FormField,
+  FormResponse,
+  FormSchema,
+  SelectOption,
+} from "@rfb-ddt/schema";
+import { runActions } from "../actions/runActions.js";
+import type { ActionContext } from "../actions/types.js";
 import {
   isFieldActive,
+  isFieldDisabled,
   isFieldVisible,
 } from "../conditions/fieldVisibility.js";
 import { getFieldsForPage, getLayoutPageCount } from "../layout/resolveLayout.js";
@@ -25,6 +34,14 @@ export class FormEngine {
   private currentPageIndex = 0;
   private readonly beforeSubmitHooks: BeforeSubmitHook[] = [];
   private readonly afterSubmitHooks: AfterSubmitHook[] = [];
+
+  /* ---- Action-driven runtime overrides ---- */
+  private readonly visibilityOverrides = new Map<string, boolean>();
+  private readonly disabledOverrides = new Map<string, boolean>();
+  private readonly dynamicOptions = new Map<string, SelectOption[]>();
+  private readonly stateListeners = new Set<() => void>();
+  /** Suppresses cascading events while we're inside an action chain. */
+  private silentMode = false;
 
   constructor(
     schema: FormSchema,
@@ -77,9 +94,20 @@ export class FormEngine {
   }
 
   setValue(fieldName: string, value: unknown, touch = true): void {
+    const prev = this.values[fieldName];
     this.values[fieldName] = value;
     if (touch) this.touched[fieldName] = true;
     delete this.errors[fieldName];
+
+    // Auto-fire `change` event for user-driven changes (not silent updates).
+    if (!this.silentMode && prev !== value) {
+      const field = this.schema.fields.find((f) => f.name === fieldName);
+      if (field) {
+        // Fire asynchronously so the current sync flow can complete; this
+        // matches typical UI expectations.
+        void this.triggerEvent(field.id, "change");
+      }
+    }
   }
 
   setValues(partial: Record<string, unknown>, touch = true): void {
@@ -96,6 +124,128 @@ export class FormEngine {
     this.errors = {};
     this.touched = {};
     this.currentPageIndex = 0;
+    this.visibilityOverrides.clear();
+    this.disabledOverrides.clear();
+    this.dynamicOptions.clear();
+    this.notify();
+  }
+
+  /* ---------- Override + dynamic options API ---------- */
+
+  setVisibilityOverride(fieldId: string, visible: boolean | undefined): void {
+    if (visible === undefined) this.visibilityOverrides.delete(fieldId);
+    else this.visibilityOverrides.set(fieldId, visible);
+    this.notify();
+  }
+
+  setDisabledOverride(fieldId: string, disabled: boolean | undefined): void {
+    if (disabled === undefined) this.disabledOverrides.delete(fieldId);
+    else this.disabledOverrides.set(fieldId, disabled);
+    this.notify();
+  }
+
+  setDynamicOptions(
+    fieldId: string,
+    options: SelectOption[] | undefined,
+  ): void {
+    if (options === undefined) this.dynamicOptions.delete(fieldId);
+    else this.dynamicOptions.set(fieldId, options);
+    this.notify();
+  }
+
+  getVisibilityOverride(fieldId: string): boolean | undefined {
+    return this.visibilityOverrides.get(fieldId);
+  }
+
+  getDisabledOverride(fieldId: string): boolean | undefined {
+    return this.disabledOverrides.get(fieldId);
+  }
+
+  getDynamicOptions(fieldId: string): SelectOption[] | undefined {
+    return this.dynamicOptions.get(fieldId);
+  }
+
+  /** Subscribe to override/options changes. Returns an unsubscribe fn. */
+  onStateChange(listener: () => void): () => void {
+    this.stateListeners.add(listener);
+    return () => {
+      this.stateListeners.delete(listener);
+    };
+  }
+
+  private notify(): void {
+    for (const listener of this.stateListeners) {
+      try {
+        listener();
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("[rfb] state listener error:", err);
+      }
+    }
+  }
+
+  /* ---------- Event triggering ---------- */
+
+  /**
+   * Runs all action chains bound to the given event for the field. Used by
+   * the renderer in response to user interactions; also fired automatically
+   * by `setValue` for `change`.
+   */
+  async triggerEvent(fieldId: string, event: FieldEvent): Promise<void> {
+    const field = this.schema.fields.find((f) => f.id === fieldId);
+    if (!field) return;
+    const bindings = (field.events ?? []).filter((b) => b.event === event);
+    if (bindings.length === 0) return;
+
+    const ctx = this.buildActionContext(field, event);
+    // Suppress cascading "change" events while running actions.
+    this.silentMode = true;
+    try {
+      for (const binding of bindings) {
+        await runActions(binding.actions, ctx);
+      }
+    } finally {
+      this.silentMode = false;
+      this.notify();
+    }
+  }
+
+  private buildActionContext(
+    sourceField: FormField,
+    event: FieldEvent,
+  ): ActionContext {
+    const engine = this;
+    return {
+      schema: this.schema,
+      get values() {
+        return engine.getValues();
+      },
+      event,
+      sourceField,
+      getValue: (name) => engine.values[name],
+      getField: (id) => engine.schema.fields.find((f) => f.id === id),
+      setValue: (name, value, options) => {
+        const silent = options?.silent !== false;
+        const prevSilent = engine.silentMode;
+        if (silent) engine.silentMode = true;
+        try {
+          engine.setValue(name, value);
+        } finally {
+          if (silent) engine.silentMode = prevSilent;
+        }
+      },
+      setVisibilityOverride: (id, visible) =>
+        engine.setVisibilityOverride(id, visible),
+      setDisabledOverride: (id, disabled) =>
+        engine.setDisabledOverride(id, disabled),
+      setDynamicOptions: (id, options) =>
+        engine.setDynamicOptions(id, options),
+      goToPage: (pageId) => {
+        const pages = engine.schema.layout?.pages ?? [];
+        const idx = pages.findIndex((p) => p.id === pageId);
+        if (idx >= 0) engine.goToPage(idx);
+      },
+    };
   }
 
   getErrors(): Record<string, string> {
@@ -151,9 +301,27 @@ export class FormEngine {
 
   getVisibleFields(pageIndex = this.currentPageIndex): FormField[] {
     const pageFields = getFieldsForPage(this.schema, pageIndex);
-    return pageFields.filter((field) =>
-      isFieldActive(field, this.schema.fields, this.values),
-    );
+    return pageFields.filter((field) => this.isFieldEffectivelyVisible(field));
+  }
+
+  /**
+   * Visibility resolved with action-driven overrides taking priority over
+   * the declarative `conditions` rules.
+   */
+  isFieldEffectivelyVisible(field: FormField): boolean {
+    const override = this.visibilityOverrides.get(field.id);
+    if (override !== undefined) return override;
+    return isFieldVisible(field, this.schema.fields, this.values);
+  }
+
+  /**
+   * Disabled state resolved with action-driven overrides taking priority
+   * over the declarative `conditions` rules.
+   */
+  isFieldEffectivelyDisabled(field: FormField): boolean {
+    const override = this.disabledOverrides.get(field.id);
+    if (override !== undefined) return override;
+    return isFieldDisabled(field, this.schema.fields, this.values);
   }
 
   goToPage(index: number): boolean {

@@ -8,19 +8,25 @@ export function RadioFieldComponent({
   value,
   onChange,
   onBlur,
+  onFocus,
+  onClick,
   error,
   disabled,
   readOnly,
   preview,
+  dynamicOptions,
 }: FieldComponentProps<RadioFieldSchema>) {
   const groupId = fieldControlId(field.id);
   const stringValue = value == null ? "" : String(value);
 
-  const { options, loading, error: loadError } = useRemoteOptions(
+  const remote = useRemoteOptions(
     field.optionsSource,
     field.options,
     { preview },
   );
+  const options = dynamicOptions ?? remote.options;
+  const loading = dynamicOptions ? false : remote.loading;
+  const loadError = dynamicOptions ? null : remote.error;
 
   const isApi = field.optionsSource?.type === "api";
 
@@ -53,6 +59,8 @@ export function RadioFieldComponent({
                 disabled={disabled || readOnly || loading}
                 onChange={() => onChange(opt.value)}
                 onBlur={onBlur}
+                onFocus={onFocus}
+                onClick={onClick}
               />
               <span className="rfb-radio__label">{opt.label}</span>
             </label>

@@ -1,4 +1,3 @@
-import { isFieldDisabled } from "@rfb-ddt/core";
 import { BasicField } from "@rfb-ddt/field-pack-basic";
 import "@rfb-ddt/field-pack-basic/styles.css";
 import type { FormResponse, FormSchema } from "@rfb-ddt/schema";
@@ -270,6 +269,7 @@ function FormBody({
           const style: CSSProperties = {
             gridColumn: `span ${span} / span ${span}`,
           };
+          const dynamicOptions = form.engine.getDynamicOptions(field.id);
           return (
             <div key={field.id} className="rfb-renderer__grid-item" style={style}>
               <BasicField
@@ -277,10 +277,20 @@ function FormBody({
                 registry={form.fieldRegistry}
                 value={values[field.name]}
                 error={errors[field.name]}
-                disabled={isFieldDisabled(field, schema.fields, values)}
+                disabled={form.engine.isFieldEffectivelyDisabled(field)}
                 readOnly={readOnly || field.readonly}
+                dynamicOptions={dynamicOptions}
                 onChange={(value) => setValue(field.name, value)}
-                onBlur={() => validateField(field.name)}
+                onBlur={() => {
+                  validateField(field.name);
+                  void form.triggerEvent(field.id, "blur");
+                }}
+                onFocus={() => {
+                  void form.triggerEvent(field.id, "focus");
+                }}
+                onClick={() => {
+                  void form.triggerEvent(field.id, "click");
+                }}
               />
             </div>
           );

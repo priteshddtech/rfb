@@ -1,5 +1,14 @@
 import type {
+  ActionCondition,
+  ConditionOperator,
+  FieldAction,
+  FieldActionLoadOptions,
+  FieldActionType,
+  FieldEvent,
+  FieldEventBinding,
+  FieldId,
   FormField,
+  FormPage,
   OptionsSource,
   OptionsSourceApi,
   SelectOption,
@@ -12,6 +21,10 @@ import { isDefaultFieldName, labelToName } from "../utils/naming.js";
 
 export interface PropertyPanelProps {
   field: FormField | null;
+  /** All fields in the schema — used by the actions editor for pickers. */
+  allFields?: FormField[];
+  /** Pages in the schema — used by the goToPage action picker. */
+  pages?: FormPage[];
   onChange: (patch: Partial<FormField>) => void;
   onDelete: () => void;
 }
@@ -48,7 +61,13 @@ const STATIC_TYPES = new Set([
   "html",
 ]);
 
-export function PropertyPanel({ field, onChange, onDelete }: PropertyPanelProps) {
+export function PropertyPanel({
+  field,
+  allFields,
+  pages,
+  onChange,
+  onDelete,
+}: PropertyPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("properties");
 
   const validations = useMemo(
@@ -368,40 +387,12 @@ export function PropertyPanel({ field, onChange, onDelete }: PropertyPanelProps)
         )}
 
         {activeTab === "actions" && (
-          <>
-            <label className="rfb-builder-properties__checkbox">
-              <input
-                type="checkbox"
-                checked={!!field.hidden}
-                onChange={(e) => onChange({ hidden: e.target.checked })}
-              />
-              Hidden
-            </label>
-            <label className="rfb-builder-properties__checkbox">
-              <input
-                type="checkbox"
-                checked={!!field.disabled}
-                onChange={(e) => onChange({ disabled: e.target.checked })}
-              />
-              Disabled
-            </label>
-            <label className="rfb-builder-properties__checkbox">
-              <input
-                type="checkbox"
-                checked={!!field.readonly}
-                onChange={(e) => onChange({ readonly: e.target.checked })}
-              />
-              Read only
-            </label>
-            <label className="rfb-builder-properties__field">
-              <span>Default Value</span>
-              <input
-                type="text"
-                value={String(field.defaultValue ?? "")}
-                onChange={(e) => onChange({ defaultValue: e.target.value })}
-              />
-            </label>
-          </>
+          <ActionsTab
+            field={field}
+            allFields={allFields ?? []}
+            pages={pages ?? []}
+            onChange={onChange}
+          />
         )}
 
         {activeTab === "validations" && (
@@ -1281,4 +1272,818 @@ function BoxSidesInput({ values, placeholder, onChange }: BoxSidesInputProps) {
 
 function isHexColor(value: string): boolean {
   return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim());
+}
+
+/* ---------- Actions tab ---------- */
+
+interface ActionsTabProps {
+  field: FormField;
+  allFields: FormField[];
+  pages: FormPage[];
+  onChange: (patch: Partial<FormField>) => void;
+}
+
+const EVENT_LABELS: Record<FieldEvent, string> = {
+  load: "On load",
+  change: "On change",
+  click: "On click",
+  focus: "On focus",
+  blur: "On blur",
+};
+
+const ACTION_LABELS: Record<FieldActionType, string> = {
+  show: "Show field(s)",
+  hide: "Hide field(s)",
+  enable: "Enable field(s)",
+  disable: "Disable field(s)",
+  resetOverrides: "Reset overrides on field(s)",
+  setValue: "Set value on field(s)",
+  copyValue: "Copy value from field",
+  clearValue: "Clear field(s)",
+  loadOptions: "Load options from API",
+  alert: "Show alert",
+  goToPage: "Go to step / tab",
+  custom: "Run custom JavaScript",
+};
+
+const OPERATORS: { id: ConditionOperator; label: string }[] = [
+  { id: "equals", label: "equals" },
+  { id: "notEquals", label: "does not equal" },
+  { id: "contains", label: "contains" },
+  { id: "empty", label: "is empty" },
+  { id: "notEmpty", label: "is not empty" },
+];
+
+function makeId(prefix: string): string {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+}
+
+function ActionsTab({ field, allFields, pages, onChange }: ActionsTabProps) {
+  const events: FieldEventBinding[] = field.events ?? [];
+
+  function setEvents(next: FieldEventBinding[]) {
+    onChange({ events: next.length ? next : undefined });
+  }
+
+  function addEvent(event: FieldEvent) {
+    setEvents([
+      ...events,
+      { id: makeId("event"), event, actions: [] },
+    ]);
+  }
+
+  function updateEvent(id: string, patch: Partial<FieldEventBinding>) {
+    setEvents(
+      events.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    );
+  }
+
+  function removeEvent(id: string) {
+    setEvents(events.filter((e) => e.id !== id));
+  }
+
+  return (
+    <div className="rfb-builder-actions">
+      {/* ---------- Initial state ---------- */}
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Initial state</h4>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!field.hidden}
+            onChange={(e) => onChange({ hidden: e.target.checked })}
+          />
+          Hidden
+        </label>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!field.disabled}
+            onChange={(e) => onChange({ disabled: e.target.checked })}
+          />
+          Disabled
+        </label>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!field.readonly}
+            onChange={(e) => onChange({ readonly: e.target.checked })}
+          />
+          Read only
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Default value</span>
+          <input
+            type="text"
+            value={String(field.defaultValue ?? "")}
+            onChange={(e) => onChange({ defaultValue: e.target.value })}
+          />
+        </label>
+      </section>
+
+      {/* ---------- Event handlers ---------- */}
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">
+          Event handlers
+        </h4>
+
+        {events.length === 0 && (
+          <p className="rfb-builder-panel__hint">
+            No event handlers yet. Pick an event below to add one.
+          </p>
+        )}
+
+        {events.map((binding) => (
+          <EventBindingEditor
+            key={binding.id}
+            binding={binding}
+            field={field}
+            allFields={allFields}
+            pages={pages}
+            onChange={(patch) => updateEvent(binding.id, patch)}
+            onRemove={() => removeEvent(binding.id)}
+          />
+        ))}
+
+        <AddEventPicker onPick={addEvent} />
+      </section>
+    </div>
+  );
+}
+
+/* ---------- Single event binding ---------- */
+
+interface EventBindingEditorProps {
+  binding: FieldEventBinding;
+  field: FormField;
+  allFields: FormField[];
+  pages: FormPage[];
+  onChange: (patch: Partial<FieldEventBinding>) => void;
+  onRemove: () => void;
+}
+
+function EventBindingEditor({
+  binding,
+  field,
+  allFields,
+  pages,
+  onChange,
+  onRemove,
+}: EventBindingEditorProps) {
+  function setActions(actions: FieldAction[]) {
+    onChange({ actions });
+  }
+
+  function addAction(type: FieldActionType) {
+    setActions([...binding.actions, makeDefaultAction(type)]);
+  }
+
+  function updateAction(index: number, next: FieldAction) {
+    const arr = [...binding.actions];
+    arr[index] = next;
+    setActions(arr);
+  }
+
+  function removeAction(index: number) {
+    setActions(binding.actions.filter((_, i) => i !== index));
+  }
+
+  return (
+    <div className="rfb-builder-actions__binding">
+      <header className="rfb-builder-actions__binding-header">
+        <label className="rfb-builder-actions__event-select">
+          <span>Event</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={binding.event}
+            onChange={(e) =>
+              onChange({ event: e.target.value as FieldEvent })
+            }
+          >
+            {(Object.keys(EVENT_LABELS) as FieldEvent[]).map((ev) => (
+              <option key={ev} value={ev}>
+                {EVENT_LABELS[ev]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="rfb-builder-properties__delete-icon"
+          onClick={onRemove}
+          aria-label="Remove event handler"
+          title="Remove event handler"
+        >
+          <IconTrash />
+        </button>
+      </header>
+
+      {binding.actions.length === 0 && (
+        <p className="rfb-builder-panel__hint">
+          No actions yet. Add one below.
+        </p>
+      )}
+
+      {binding.actions.map((action, index) => (
+        <ActionEditor
+          key={index}
+          action={action}
+          field={field}
+          allFields={allFields}
+          pages={pages}
+          onChange={(next) => updateAction(index, next)}
+          onRemove={() => removeAction(index)}
+        />
+      ))}
+
+      <AddActionPicker onPick={addAction} />
+    </div>
+  );
+}
+
+/* ---------- Action picker buttons ---------- */
+
+function AddEventPicker({ onPick }: { onPick: (event: FieldEvent) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rfb-builder-actions__add">
+      {!open ? (
+        <button
+          type="button"
+          className="rfb-builder-properties__option-add"
+          onClick={() => setOpen(true)}
+        >
+          <IconPlus /> Add event handler
+        </button>
+      ) : (
+        <div className="rfb-builder-actions__picker">
+          {(Object.keys(EVENT_LABELS) as FieldEvent[]).map((ev) => (
+            <button
+              key={ev}
+              type="button"
+              className="rfb-builder-actions__picker-item"
+              onClick={() => {
+                onPick(ev);
+                setOpen(false);
+              }}
+            >
+              {EVENT_LABELS[ev]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="rfb-builder-actions__picker-cancel"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddActionPicker({
+  onPick,
+}: {
+  onPick: (type: FieldActionType) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rfb-builder-actions__add">
+      {!open ? (
+        <button
+          type="button"
+          className="rfb-builder-properties__option-add"
+          onClick={() => setOpen(true)}
+        >
+          <IconPlus /> Add action
+        </button>
+      ) : (
+        <div className="rfb-builder-actions__picker">
+          {(Object.keys(ACTION_LABELS) as FieldActionType[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              className="rfb-builder-actions__picker-item"
+              onClick={() => {
+                onPick(t);
+                setOpen(false);
+              }}
+            >
+              {ACTION_LABELS[t]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="rfb-builder-actions__picker-cancel"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Single action ---------- */
+
+interface ActionEditorProps {
+  action: FieldAction;
+  field: FormField;
+  allFields: FormField[];
+  pages: FormPage[];
+  onChange: (next: FieldAction) => void;
+  onRemove: () => void;
+}
+
+function ActionEditor({
+  action,
+  field,
+  allFields,
+  pages,
+  onChange,
+  onRemove,
+}: ActionEditorProps) {
+  const otherFields = allFields.filter((f) => f.id !== field.id);
+
+  return (
+    <div className="rfb-builder-actions__action">
+      <header className="rfb-builder-actions__action-header">
+        <select
+          className="rfb-builder-properties__select rfb-builder-actions__action-type"
+          value={action.type}
+          onChange={(e) => {
+            const nextType = e.target.value as FieldActionType;
+            if (nextType === action.type) return;
+            onChange(makeDefaultAction(nextType));
+          }}
+        >
+          {(Object.keys(ACTION_LABELS) as FieldActionType[]).map((t) => (
+            <option key={t} value={t}>
+              {ACTION_LABELS[t]}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="rfb-builder-properties__option-remove"
+          onClick={onRemove}
+          aria-label="Remove action"
+        >
+          <IconTrash />
+        </button>
+      </header>
+
+      <ConditionEditor
+        condition={action.when}
+        allFields={allFields}
+        onChange={(next) => onChange({ ...action, when: next })}
+      />
+
+      <ActionTypeFields
+        action={action}
+        otherFields={otherFields}
+        pages={pages}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
+/* ---------- Condition (when) editor ---------- */
+
+interface ConditionEditorProps {
+  condition: ActionCondition | undefined;
+  allFields: FormField[];
+  onChange: (next: ActionCondition | undefined) => void;
+}
+
+function ConditionEditor({
+  condition,
+  allFields,
+  onChange,
+}: ConditionEditorProps) {
+  const enabled = !!condition;
+  const needsValue =
+    condition?.operator !== "empty" && condition?.operator !== "notEmpty";
+
+  function toggle(checked: boolean) {
+    if (checked) {
+      onChange({
+        fieldId: allFields[0]?.id ?? "",
+        operator: "equals",
+        value: "",
+      });
+    } else {
+      onChange(undefined);
+    }
+  }
+
+  return (
+    <div className="rfb-builder-actions__when">
+      <label className="rfb-builder-properties__checkbox">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => toggle(e.target.checked)}
+        />
+        Only when…
+      </label>
+      {enabled && condition && (
+        <div className="rfb-builder-actions__when-row">
+          <select
+            className="rfb-builder-properties__select"
+            value={condition.fieldId}
+            onChange={(e) =>
+              onChange({ ...condition, fieldId: e.target.value })
+            }
+          >
+            <option value="">— select field —</option>
+            {allFields.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.label ?? f.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rfb-builder-properties__select"
+            value={condition.operator}
+            onChange={(e) =>
+              onChange({
+                ...condition,
+                operator: e.target.value as ConditionOperator,
+              })
+            }
+          >
+            {OPERATORS.map((op) => (
+              <option key={op.id} value={op.id}>
+                {op.label}
+              </option>
+            ))}
+          </select>
+          {needsValue && (
+            <input
+              type="text"
+              placeholder="value"
+              value={String(condition.value ?? "")}
+              onChange={(e) =>
+                onChange({ ...condition, value: e.target.value })
+              }
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Per-action-type bodies ---------- */
+
+interface ActionTypeFieldsProps {
+  action: FieldAction;
+  otherFields: FormField[];
+  pages: FormPage[];
+  onChange: (next: FieldAction) => void;
+}
+
+function ActionTypeFields({
+  action,
+  otherFields,
+  pages,
+  onChange,
+}: ActionTypeFieldsProps) {
+  switch (action.type) {
+    case "show":
+    case "hide":
+    case "enable":
+    case "disable":
+    case "resetOverrides":
+    case "clearValue":
+      return (
+        <TargetsPicker
+          label="Target fields"
+          value={action.targets}
+          fields={otherFields}
+          onChange={(targets) => onChange({ ...action, targets })}
+        />
+      );
+
+    case "setValue":
+      return (
+        <>
+          <TargetsPicker
+            label="Target fields"
+            value={action.targets}
+            fields={otherFields}
+            onChange={(targets) => onChange({ ...action, targets })}
+          />
+          <label className="rfb-builder-properties__field">
+            <span>Value</span>
+            <input
+              type="text"
+              value={String(action.value ?? "")}
+              placeholder="literal value"
+              onChange={(e) =>
+                onChange({ ...action, value: e.target.value })
+              }
+            />
+          </label>
+        </>
+      );
+
+    case "copyValue":
+      return (
+        <>
+          <TargetsPicker
+            label="Target fields"
+            value={action.targets}
+            fields={otherFields}
+            onChange={(targets) => onChange({ ...action, targets })}
+          />
+          <label className="rfb-builder-properties__field">
+            <span>Copy value from</span>
+            <select
+              className="rfb-builder-properties__select"
+              value={action.sourceFieldId}
+              onChange={(e) =>
+                onChange({ ...action, sourceFieldId: e.target.value })
+              }
+            >
+              <option value="">— select field —</option>
+              {otherFields.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label ?? f.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      );
+
+    case "loadOptions":
+      return (
+        <LoadOptionsEditor
+          action={action}
+          otherFields={otherFields}
+          onChange={onChange}
+        />
+      );
+
+    case "alert":
+      return (
+        <label className="rfb-builder-properties__field">
+          <span>Message</span>
+          <input
+            type="text"
+            value={action.message}
+            onChange={(e) =>
+              onChange({ ...action, message: e.target.value })
+            }
+          />
+        </label>
+      );
+
+    case "goToPage":
+      return (
+        <label className="rfb-builder-properties__field">
+          <span>Page</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={action.pageId}
+            onChange={(e) => onChange({ ...action, pageId: e.target.value })}
+          >
+            <option value="">— select page —</option>
+            {pages.map((p, i) => (
+              <option key={p.id} value={p.id}>
+                {p.title || `Page ${i + 1}`}
+              </option>
+            ))}
+          </select>
+          {pages.length === 0 && (
+            <span className="rfb-builder-panel__hint">
+              Switch the form layout to Steps / Tabs to enable this.
+            </span>
+          )}
+        </label>
+      );
+
+    case "custom":
+      return (
+        <label className="rfb-builder-properties__field">
+          <span>JavaScript</span>
+          <textarea
+            rows={5}
+            spellCheck={false}
+            value={action.code}
+            placeholder={
+              "// ctx: { values, getValue, setValue, setVisibilityOverride, ... }\n" +
+              'if (ctx.getValue("country") === "US") {\n' +
+              '  ctx.setVisibilityOverride("state", true);\n' +
+              "}"
+            }
+            onChange={(e) => onChange({ ...action, code: e.target.value })}
+          />
+          <span className="rfb-builder-panel__hint">
+            Receives <code>ctx</code> as the only argument. Runs sandboxed via
+            <code> new Function</code>.
+          </span>
+        </label>
+      );
+  }
+}
+
+/* ---------- Multi-field target picker ---------- */
+
+interface TargetsPickerProps {
+  label: string;
+  value: FieldId[];
+  fields: FormField[];
+  onChange: (next: FieldId[]) => void;
+}
+
+function TargetsPicker({ label, value, fields, onChange }: TargetsPickerProps) {
+  function toggle(id: FieldId) {
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  }
+
+  return (
+    <div className="rfb-builder-actions__targets">
+      <span className="rfb-builder-actions__targets-label">{label}</span>
+      {fields.length === 0 && (
+        <p className="rfb-builder-panel__hint">
+          No other fields available. Add more fields first.
+        </p>
+      )}
+      <div className="rfb-builder-actions__targets-list">
+        {fields.map((f) => (
+          <label
+            key={f.id}
+            className={[
+              "rfb-builder-actions__target",
+              value.includes(f.id) && "rfb-builder-actions__target--active",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <input
+              type="checkbox"
+              checked={value.includes(f.id)}
+              onChange={() => toggle(f.id)}
+            />
+            <span>{f.label ?? f.name}</span>
+            <code>{f.type}</code>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Load options action editor ---------- */
+
+interface LoadOptionsEditorProps {
+  action: FieldActionLoadOptions;
+  otherFields: FormField[];
+  onChange: (next: FieldActionLoadOptions) => void;
+}
+
+function LoadOptionsEditor({
+  action,
+  otherFields,
+  onChange,
+}: LoadOptionsEditorProps) {
+  // Only select / radio fields can receive options.
+  const targetableFields = otherFields.filter(
+    (f) => f.type === "select" || f.type === "radio",
+  );
+
+  function patchSource(p: Partial<OptionsSourceApi>) {
+    onChange({ ...action, source: { ...action.source, ...p } });
+  }
+
+  return (
+    <>
+      <TargetsPicker
+        label="Target select / radio fields"
+        value={action.targets}
+        fields={targetableFields}
+        onChange={(targets) => onChange({ ...action, targets })}
+      />
+
+      <label className="rfb-builder-properties__field">
+        <span>URL (use {"{value}"} for the source field value)</span>
+        <input
+          type="url"
+          value={action.source.url}
+          placeholder="https://api.example.com/states?country={value}"
+          onChange={(e) => patchSource({ url: e.target.value })}
+        />
+      </label>
+
+      <div className="rfb-builder-properties__row">
+        <label className="rfb-builder-properties__field">
+          <span>Method</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={action.source.method ?? "GET"}
+            onChange={(e) =>
+              patchSource({ method: e.target.value as "GET" | "POST" })
+            }
+          >
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Results path</span>
+          <input
+            type="text"
+            value={action.source.resultsPath ?? ""}
+            placeholder="data.items"
+            onChange={(e) =>
+              patchSource({ resultsPath: e.target.value || undefined })
+            }
+          />
+        </label>
+      </div>
+
+      <div className="rfb-builder-properties__row">
+        <label className="rfb-builder-properties__field">
+          <span>Value key</span>
+          <input
+            type="text"
+            value={action.source.valueKey}
+            placeholder="id"
+            onChange={(e) => patchSource({ valueKey: e.target.value })}
+          />
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Label key</span>
+          <input
+            type="text"
+            value={action.source.labelKey}
+            placeholder="name"
+            onChange={(e) => patchSource({ labelKey: e.target.value })}
+          />
+        </label>
+      </div>
+
+      {action.source.method === "POST" && (
+        <label className="rfb-builder-properties__field">
+          <span>Body (raw JSON, use {"{value}"} token)</span>
+          <textarea
+            rows={3}
+            value={action.source.body ?? ""}
+            onChange={(e) =>
+              patchSource({ body: e.target.value || undefined })
+            }
+          />
+        </label>
+      )}
+    </>
+  );
+}
+
+/* ---------- Default action factory ---------- */
+
+function makeDefaultAction(type: FieldActionType): FieldAction {
+  switch (type) {
+    case "show":
+    case "hide":
+    case "enable":
+    case "disable":
+    case "resetOverrides":
+    case "clearValue":
+      return { type, targets: [] };
+    case "setValue":
+      return { type, targets: [], value: "" };
+    case "copyValue":
+      return { type, targets: [], sourceFieldId: "" };
+    case "loadOptions":
+      return {
+        type,
+        targets: [],
+        source: {
+          type: "api",
+          url: "",
+          method: "GET",
+          valueKey: "value",
+          labelKey: "label",
+        },
+      };
+    case "alert":
+      return { type, message: "" };
+    case "goToPage":
+      return { type, pageId: "" };
+    case "custom":
+      return { type, code: "" };
+  }
 }

@@ -44,3 +44,11 @@ export {
   createPassthroughApiMapper,
 } from "./api/mapApiResponseToSchema.js";
 export type { ApiToSchemaMapper } from "./api/mapApiResponseToSchema.js";
+
+export { runActions } from "./actions/runActions.js";
+export { evaluateActionCondition } from "./actions/evaluateActionCondition.js";
+export type {
+  ActionContext,
+  ActionRunOptions,
+  ActionRunResult,
+} from "./actions/types.js";

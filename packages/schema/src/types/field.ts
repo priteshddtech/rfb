@@ -19,6 +19,130 @@ export interface FieldCondition {
   then: "show" | "hide" | "enable" | "disable";
 }
 
+/* ---------- Event bindings ---------- */
+
+/** Events that can trigger an action chain on a field. */
+export type FieldEvent = "load" | "change" | "click" | "focus" | "blur";
+
+/** A precondition that gates a single action (separate from FieldCondition). */
+export interface ActionCondition {
+  fieldId: FieldId;
+  operator: ConditionOperator;
+  value?: unknown;
+}
+
+interface FieldActionShared {
+  /** Optional id for debugging / referencing. */
+  id?: string;
+  /** Optional precondition; the action only runs when this is truthy. */
+  when?: ActionCondition;
+}
+
+/** Set one or more fields visible. */
+export interface FieldActionShow extends FieldActionShared {
+  type: "show";
+  targets: FieldId[];
+}
+
+export interface FieldActionHide extends FieldActionShared {
+  type: "hide";
+  targets: FieldId[];
+}
+
+export interface FieldActionEnable extends FieldActionShared {
+  type: "enable";
+  targets: FieldId[];
+}
+
+export interface FieldActionDisable extends FieldActionShared {
+  type: "disable";
+  targets: FieldId[];
+}
+
+/** Reset visibility / disabled overrides so declarative rules take over again. */
+export interface FieldActionResetOverrides extends FieldActionShared {
+  type: "resetOverrides";
+  targets: FieldId[];
+}
+
+/** Set the value of one or more fields. */
+export interface FieldActionSetValue extends FieldActionShared {
+  type: "setValue";
+  targets: FieldId[];
+  value: unknown;
+}
+
+/** Copy a value from another field into the targets. */
+export interface FieldActionCopyValue extends FieldActionShared {
+  type: "copyValue";
+  targets: FieldId[];
+  sourceFieldId: FieldId;
+}
+
+/** Clear (reset to empty) the targets. */
+export interface FieldActionClearValue extends FieldActionShared {
+  type: "clearValue";
+  targets: FieldId[];
+}
+
+/** Fetch options from an API and apply them to one or more select/radio fields. */
+export interface FieldActionLoadOptions extends FieldActionShared {
+  type: "loadOptions";
+  targets: FieldId[];
+  /** Re-uses the same shape as `OptionsSourceApi` (url + mapping). */
+  source: OptionsSourceApi;
+  /**
+   * Optional placeholder for `{value}` token in the URL, where `value` is
+   * the source field's current value. Defaults to `{value}`.
+   */
+  valueToken?: string;
+}
+
+/** Pop a browser alert (mostly for testing / debugging). */
+export interface FieldActionAlert extends FieldActionShared {
+  type: "alert";
+  message: string;
+}
+
+/** Navigate to a specific step / tab by page id. */
+export interface FieldActionGoToPage extends FieldActionShared {
+  type: "goToPage";
+  pageId: string;
+}
+
+/**
+ * Run arbitrary JavaScript. The body receives a single `ctx` argument with:
+ * `{ values, getValue, setValue, setVisible, setDisabled, setOptions, schema, event }`.
+ * Use sparingly; prefer the typed actions above when possible.
+ */
+export interface FieldActionCustom extends FieldActionShared {
+  type: "custom";
+  code: string;
+}
+
+export type FieldAction =
+  | FieldActionShow
+  | FieldActionHide
+  | FieldActionEnable
+  | FieldActionDisable
+  | FieldActionResetOverrides
+  | FieldActionSetValue
+  | FieldActionCopyValue
+  | FieldActionClearValue
+  | FieldActionLoadOptions
+  | FieldActionAlert
+  | FieldActionGoToPage
+  | FieldActionCustom;
+
+export type FieldActionType = FieldAction["type"];
+
+/** A bundle of actions to run when an event fires on a field. */
+export interface FieldEventBinding {
+  id: string;
+  event: FieldEvent;
+  actions: FieldAction[];
+}
+
 /**
  * Minimum properties every field must support.
  * `type` is a string so custom field packs can register new types.
@@ -44,6 +168,8 @@ export interface FieldBase {
   defaultValue?: unknown;
   validation?: ValidationRule[];
   conditions?: FieldCondition[];
+  /** Imperative event-driven action chains. */
+  events?: FieldEventBinding[];
   /** Extra space-separated CSS class names. */
   className?: string;
   /**

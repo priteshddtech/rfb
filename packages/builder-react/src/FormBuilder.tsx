@@ -571,6 +571,8 @@ export function FormBuilder({
             </div>
             <PropertyPanel
               field={selectedField}
+              allFields={schema.fields}
+              pages={pages}
               onChange={handleFieldPatch}
               onDelete={() => {
                 if (selectedFieldId) handleRemoveField(selectedFieldId);

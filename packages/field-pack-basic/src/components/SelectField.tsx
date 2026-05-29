@@ -8,18 +8,25 @@ export function SelectFieldComponent({
   value,
   onChange,
   onBlur,
+  onFocus,
+  onClick,
   error,
   disabled,
   readOnly,
   preview,
+  dynamicOptions,
 }: FieldComponentProps<SelectFieldSchema>) {
   const id = fieldControlId(field.id);
 
-  const { options, loading, error: loadError } = useRemoteOptions(
+  const remote = useRemoteOptions(
     field.optionsSource,
     field.options,
     { preview },
   );
+  // Dynamic options (from actions) take priority over both static and API.
+  const options = dynamicOptions ?? remote.options;
+  const loading = dynamicOptions ? false : remote.loading;
+  const loadError = dynamicOptions ? null : remote.error;
 
   const isApi = field.optionsSource?.type === "api";
   const apiPlaceholder = isApi && preview
@@ -52,6 +59,8 @@ export function SelectFieldComponent({
             onChange(values);
           }}
           onBlur={onBlur}
+          onFocus={onFocus}
+          onClick={onClick}
         >
           {options.map((opt) => (
             <option key={String(opt.value)} value={String(opt.value)}>
@@ -79,6 +88,8 @@ export function SelectFieldComponent({
         aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
+        onFocus={onFocus}
+        onClick={onClick}
       >
         <option value="" disabled={field.required}>
           {apiPlaceholder ?? field.placeholder ?? "Select…"}
