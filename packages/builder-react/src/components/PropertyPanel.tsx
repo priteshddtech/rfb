@@ -38,15 +38,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "validations", label: "Validations" },
 ];
 
-const TEXT_LIKE_TYPES = new Set([
-  "text",
-  "textarea",
-  "email",
-  "password",
-  "phone",
-  "url",
-]);
-
 const OPTION_TYPES = new Set(["select", "radio", "checkboxGroup"]);
 
 /** Static / presentational fields don't submit data and have a custom config UI. */
@@ -158,7 +149,6 @@ export function PropertyPanel({
   }
 
   const Icon = FIELD_ICONS[field.type];
-  const supportsLength = TEXT_LIKE_TYPES.has(field.type);
   const hasOptions = OPTION_TYPES.has(field.type) && "options" in field;
   const options = hasOptions ? ((field as { options: SelectOption[] }).options ?? []) : [];
   const isStatic = STATIC_TYPES.has(field.type);
@@ -331,29 +321,6 @@ export function PropertyPanel({
 
             <StaticFieldControls field={field} onChange={onChange} />
             <TypeSpecificControls field={field} onChange={onChange} />
-
-            {supportsLength && (
-              <div className="rfb-builder-properties__row">
-                <label className="rfb-builder-properties__field">
-                  <span>Min length</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={minLength?.type === "minLength" ? minLength.value : ""}
-                    onChange={(e) => applyLengthChange("minLength", e.target.value)}
-                  />
-                </label>
-                <label className="rfb-builder-properties__field">
-                  <span>Max length</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={maxLength?.type === "maxLength" ? maxLength.value : ""}
-                    onChange={(e) => applyLengthChange("maxLength", e.target.value)}
-                  />
-                </label>
-              </div>
-            )}
 
             {hasOptions && (
               <OptionsEditor
