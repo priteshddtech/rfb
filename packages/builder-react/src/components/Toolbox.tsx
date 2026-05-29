@@ -1,4 +1,9 @@
-import type { LayoutType } from "@rfb-ddt/schema";
+import type {
+  FormSettings,
+  LayoutType,
+  ModalSettings,
+  ModalSize,
+} from "@rfb-ddt/schema";
 import { useState } from "react";
 import { DEFAULT_TOOLBOX_FIELDS } from "../constants.js";
 import { IconChevronDown } from "../icons.js";
@@ -16,9 +21,11 @@ export interface ToolboxProps {
   formId: string;
   formVersion: string;
   layoutType: LayoutType;
+  formSettings: FormSettings | undefined;
   onFormPatch: (patch: { title?: string; description?: string }) => void;
   onMetaPatch: (patch: { id?: string; version?: string }) => void;
   onLayoutTypeChange: (type: LayoutType) => void;
+  onSettingsPatch: (patch: Partial<FormSettings>) => void;
 }
 
 const GROUP_LABELS: Record<string, string> = {
@@ -53,9 +60,11 @@ export function Toolbox({
   formId,
   formVersion,
   layoutType,
+  formSettings,
   onFormPatch,
   onMetaPatch,
   onLayoutTypeChange,
+  onSettingsPatch,
 }: ToolboxProps) {
   const groups = fields.reduce<Record<string, ToolboxFieldMeta[]>>(
     (acc, field) => {
@@ -198,6 +207,11 @@ export function Toolbox({
                 switching.
               </p>
             </fieldset>
+
+            <ModalSettingsBlock
+              settings={formSettings}
+              onSettingsPatch={onSettingsPatch}
+            />
           </div>
         )}
 
@@ -223,5 +237,143 @@ export function Toolbox({
         )}
       </div>
     </aside>
+  );
+}
+
+/* ---------- Modal settings block ---------- */
+
+interface ModalSettingsBlockProps {
+  settings: FormSettings | undefined;
+  onSettingsPatch: (patch: Partial<FormSettings>) => void;
+}
+
+function ModalSettingsBlock({
+  settings,
+  onSettingsPatch,
+}: ModalSettingsBlockProps) {
+  const enabled = settings?.displayAsModal === true;
+  const modal = settings?.modal ?? {};
+
+  function patchModal(p: Partial<ModalSettings>) {
+    onSettingsPatch({ modal: { ...modal, ...p } });
+  }
+
+  const SIZES: { id: ModalSize; label: string }[] = [
+    { id: "small", label: "Small" },
+    { id: "medium", label: "Medium" },
+    { id: "large", label: "Large" },
+    { id: "fullscreen", label: "Full screen" },
+  ];
+
+  return (
+    <fieldset className="rfb-builder-form-settings__layout">
+      <legend>Modal / Popup</legend>
+      <label className="rfb-builder-properties__checkbox">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) =>
+            onSettingsPatch({ displayAsModal: e.target.checked })
+          }
+        />
+        Display as modal
+      </label>
+      <p className="rfb-builder-panel__hint">
+        Renders a trigger button that opens the form in a centred dialog.
+        Switch to the <strong>Preview</strong> tab to test it.
+      </p>
+
+      {enabled && (
+        <>
+          <label className="rfb-builder-properties__field">
+            <span>Trigger button label</span>
+            <input
+              type="text"
+              value={modal.triggerLabel ?? ""}
+              placeholder="Open form"
+              onChange={(e) =>
+                patchModal({ triggerLabel: e.target.value || undefined })
+              }
+            />
+          </label>
+
+          <label className="rfb-builder-properties__field">
+            <span>Modal size</span>
+            <select
+              className="rfb-builder-properties__select"
+              value={modal.size ?? "medium"}
+              onChange={(e) =>
+                patchModal({ size: e.target.value as ModalSize })
+              }
+            >
+              {SIZES.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.showTrigger !== false}
+              onChange={(e) =>
+                patchModal({ showTrigger: e.target.checked })
+              }
+            />
+            Show trigger button
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.openOnLoad === true}
+              onChange={(e) => patchModal({ openOnLoad: e.target.checked })}
+            />
+            Open automatically on load
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.closeOnBackdrop !== false}
+              onChange={(e) =>
+                patchModal({ closeOnBackdrop: e.target.checked })
+              }
+            />
+            Close on backdrop click
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.closeOnEscape !== false}
+              onChange={(e) =>
+                patchModal({ closeOnEscape: e.target.checked })
+              }
+            />
+            Close on Escape key
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.showCloseButton !== false}
+              onChange={(e) =>
+                patchModal({ showCloseButton: e.target.checked })
+              }
+            />
+            Show close (×) button
+          </label>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={modal.closeOnSubmit !== false}
+              onChange={(e) =>
+                patchModal({ closeOnSubmit: e.target.checked })
+              }
+            />
+            Close after successful submit
+          </label>
+        </>
+      )}
+    </fieldset>
   );
 }

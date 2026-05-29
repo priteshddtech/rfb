@@ -1,13 +1,104 @@
 import { isFieldDisabled } from "@rfb-ddt/core";
 import { BasicField } from "@rfb-ddt/field-pack-basic";
 import "@rfb-ddt/field-pack-basic/styles.css";
-import type { CSSProperties } from "react";
-import { useState, type FormEvent } from "react";
+import type { FormResponse, FormSchema } from "@rfb-ddt/schema";
+import {
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from "react";
+import { FormModal } from "./FormModal.js";
 import "./styles/renderer.css";
 import type { FormRendererProps } from "./types.js";
 import { useFormRenderer } from "./useFormRenderer.js";
 
-export function FormRenderer({
+/**
+ * Public form renderer. When `schema.settings.displayAsModal` is true,
+ * the form is rendered behind a trigger button and opens inside a modal.
+ * Otherwise, it renders inline.
+ */
+export function FormRenderer(props: FormRendererProps) {
+  const isModal = props.schema.settings?.displayAsModal === true;
+  if (!isModal) return <FormBody {...props} />;
+  return <ModalFormRenderer {...props} />;
+}
+
+/* ---------- Modal wrapper ---------- */
+
+function ModalFormRenderer(props: FormRendererProps) {
+  const {
+    schema,
+    open: controlledOpen,
+    defaultOpen,
+    onOpenChange,
+    onSubmitSuccess,
+    ...rest
+  } = props;
+  const modalCfg = schema.settings?.modal ?? {};
+
+  const [internalOpen, setInternalOpen] = useState<boolean>(
+    modalCfg.openOnLoad ?? defaultOpen ?? false,
+  );
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? !!controlledOpen : internalOpen;
+
+  function setOpen(next: boolean) {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
+
+  function handleSubmitSuccess(response: FormResponse) {
+    onSubmitSuccess?.(response);
+    if (modalCfg.closeOnSubmit !== false) {
+      // Slight defer so the user briefly sees the success message
+      // before the modal closes.
+      setTimeout(() => setOpen(false), 250);
+    }
+  }
+
+  const triggerLabel = modalCfg.triggerLabel ?? schema.title ?? "Open form";
+  const showTrigger = modalCfg.showTrigger !== false;
+
+  return (
+    <>
+      {showTrigger && (
+        <button
+          type="button"
+          className="rfb-modal-trigger rfb-renderer__button rfb-renderer__button--primary"
+          onClick={() => setOpen(true)}
+        >
+          {triggerLabel}
+        </button>
+      )}
+      <FormModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={schema.title}
+        description={schema.description}
+        size={modalCfg.size}
+        closeOnBackdrop={modalCfg.closeOnBackdrop !== false}
+        closeOnEscape={modalCfg.closeOnEscape !== false}
+        showCloseButton={modalCfg.showCloseButton !== false}
+      >
+        <FormBody
+          schema={schema}
+          {...rest}
+          showHeader={false}
+          onSubmitSuccess={handleSubmitSuccess}
+          onCancel={() => {
+            rest.onCancel?.();
+            setOpen(false);
+          }}
+        />
+      </FormModal>
+    </>
+  );
+}
+
+/* ---------- Form body (the actual <form>) ---------- */
+
+function FormBody({
   schema,
   initialValues,
   className,
@@ -234,3 +325,6 @@ export function FormRenderer({
     </form>
   );
 }
+
+/** Used by host apps that want to render the form body without the modal wrapper. */
+export { FormBody as InlineFormRenderer };

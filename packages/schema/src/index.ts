@@ -7,6 +7,8 @@ export type {
   FormSchema,
   FormSettings,
   LayoutType,
+  ModalSettings,
+  ModalSize,
 } from "./types/form.js";
 
 export type {

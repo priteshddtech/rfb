@@ -17,6 +17,15 @@ export interface FormRendererProps {
   /** Show submit / cancel / step controls. Default: true. */
   showActions?: boolean;
   registerBuiltins?: boolean;
+  /**
+   * When `schema.settings.displayAsModal` is true, controls modal visibility.
+   * Leave undefined for uncontrolled mode (an internal trigger button opens it).
+   */
+  open?: boolean;
+  /** Uncontrolled initial open state when the schema renders as a modal. */
+  defaultOpen?: boolean;
+  /** Fires when modal open state changes (modal forms only). */
+  onOpenChange?: (open: boolean) => void;
   onChange?: (values: Record<string, unknown>) => void;
   onSubmit?: (result: SubmitResult) => void | Promise<void>;
   onSubmitSuccess?: (response: FormResponse) => void;

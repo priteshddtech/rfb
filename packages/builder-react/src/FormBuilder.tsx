@@ -532,9 +532,16 @@ export function FormBuilder({
               formId={schema.id}
               formVersion={schema.version}
               layoutType={layoutType}
+              formSettings={schema.settings}
               onFormPatch={(patch) => updateSchema({ ...schema, ...patch })}
               onMetaPatch={(patch) => updateSchema({ ...schema, ...patch })}
               onLayoutTypeChange={handleLayoutTypeChange}
+              onSettingsPatch={(patch) =>
+                updateSchema({
+                  ...schema,
+                  settings: { ...schema.settings, ...patch },
+                })
+              }
             />
             <div className="rfb-builder__canvas-column">
               {isPaged && (
