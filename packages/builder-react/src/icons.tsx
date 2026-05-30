@@ -271,3 +271,63 @@ export const IconSearch = (p: IconProps) => (
     <path d="m20 20-3.5-3.5" />
   </svg>
 );
+export const IconSettings = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+  </svg>
+);
+export const IconPalette = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 22a10 10 0 1 1 0-20c5.5 0 10 4 10 9 0 3-2.5 5-5 5h-2a2 2 0 0 0-1 3.7c.5.9-.2 2.3-2 2.3z" />
+    <circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" />
+    <circle cx="12" cy="7.5" r="1.2" fill="currentColor" />
+    <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
+    <circle cx="8" cy="15" r="1.2" fill="currentColor" />
+  </svg>
+);
+export const IconPlug = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M9 7V3M15 7V3" />
+    <path d="M7 7h10v4a5 5 0 0 1-10 0z" />
+    <path d="M12 16v5" />
+  </svg>
+);
+export const IconRocket = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M4 14c0-3 3-9 9-11 1 6-5 12-9 11z" />
+    <path d="m9 14 1 4 4 1c4-2 6-7 7-12-5 1-10 3-12 7z" />
+    <circle cx="15" cy="9" r="1.2" fill="currentColor" />
+  </svg>
+);
+export const IconMobile = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="6" y="3" width="12" height="18" rx="2.5" />
+    <path d="M10 18h4" />
+  </svg>
+);
+export const IconTablet = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="4" y="3" width="16" height="18" rx="2" />
+    <path d="M10 18h4" />
+  </svg>
+);
+export const IconDesktop = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="2" y="4" width="20" height="13" rx="2" />
+    <path d="M8 21h8M12 17v4" />
+  </svg>
+);
+export const IconShare = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="6" r="3" />
+    <circle cx="18" cy="18" r="3" />
+    <path d="m8.6 10.5 6.8-3M8.6 13.5l6.8 3" />
+  </svg>
+);
+export const IconX = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="m6 6 12 12M18 6 6 18" />
+  </svg>
+);

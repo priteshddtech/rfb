@@ -12,7 +12,11 @@ import type {
 import { useMemo, useState } from "react";
 import { IconChevronDown, IconPlus, IconTrash } from "../icons.js";
 
-export interface SubmissionSettingsBlockProps {
+/* ------------------------------------------------------------------ */
+/*  Shared types + utils                                              */
+/* ------------------------------------------------------------------ */
+
+export interface SubmissionEditorProps {
   settings: FormSettings | undefined;
   formFields: FormField[];
   onSettingsPatch: (patch: Partial<FormSettings>) => void;
@@ -24,17 +28,32 @@ function makeId(prefix: string): string {
     .slice(2, 6)}`;
 }
 
-export function SubmissionSettingsBlock({
+function patchSubmission(
+  settings: FormSettings | undefined,
+  onSettingsPatch: SubmissionEditorProps["onSettingsPatch"],
+  patch: Partial<SubmissionSettings>,
+) {
+  const current = settings?.submission ?? {};
+  onSettingsPatch({ submission: { ...current, ...patch } });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Behaviour block — success / redirect / error / reset              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The client-side behaviour after a submit (success view, redirect, error
+ * view, reset). Lives in the Settings tab — these are core form behaviours.
+ */
+export function SubmissionBehaviorBlock({
   settings,
   formFields,
   onSettingsPatch,
-}: SubmissionSettingsBlockProps) {
+}: SubmissionEditorProps) {
   const submission: SubmissionSettings = settings?.submission ?? {};
   const successMessage = submission.successMessage;
   const successRedirect = submission.successRedirect;
   const errorMessage = submission.errorMessage;
-  const emails = submission.emailNotifications ?? [];
-  const webhooks = submission.webhooks ?? [];
   const resetAfter = submission.resetAfterSubmit !== false;
 
   const fieldNames = useMemo(
@@ -43,7 +62,7 @@ export function SubmissionSettingsBlock({
   );
 
   function patch(p: Partial<SubmissionSettings>) {
-    onSettingsPatch({ submission: { ...submission, ...p } });
+    patchSubmission(settings, onSettingsPatch, p);
   }
 
   function toggleSuccessMessage(enabled: boolean) {
@@ -89,72 +108,17 @@ export function SubmissionSettingsBlock({
   }
 
   function patchSuccess(p: Partial<SuccessMessage>) {
-    patch({
-      successMessage: { ...(successMessage ?? { body: "" }), ...p },
-    });
+    patch({ successMessage: { ...(successMessage ?? { body: "" }), ...p } });
   }
-
   function patchRedirect(p: Partial<SuccessRedirect>) {
-    patch({
-      successRedirect: { ...(successRedirect ?? { url: "" }), ...p },
-    });
+    patch({ successRedirect: { ...(successRedirect ?? { url: "" }), ...p } });
   }
-
   function patchError(p: Partial<ErrorMessage>) {
-    patch({
-      errorMessage: { ...(errorMessage ?? { body: "" }), ...p },
-    });
-  }
-
-  function addEmail() {
-    const next: EmailNotification = {
-      id: makeId("email"),
-      to: "",
-      subject: "",
-      body: "",
-    };
-    patch({ emailNotifications: [...emails, next] });
-  }
-
-  function updateEmail(id: string, p: Partial<EmailNotification>) {
-    patch({
-      emailNotifications: emails.map((e) => (e.id === id ? { ...e, ...p } : e)),
-    });
-  }
-
-  function removeEmail(id: string) {
-    patch({
-      emailNotifications: emails.filter((e) => e.id !== id),
-    });
-  }
-
-  function addWebhook() {
-    const next: WebhookConfig = {
-      id: makeId("webhook"),
-      url: "",
-      method: "POST",
-      failOpen: true,
-    };
-    patch({ webhooks: [...webhooks, next] });
-  }
-
-  function updateWebhook(id: string, p: Partial<WebhookConfig>) {
-    patch({
-      webhooks: webhooks.map((w) => (w.id === id ? { ...w, ...p } : w)),
-    });
-  }
-
-  function removeWebhook(id: string) {
-    patch({
-      webhooks: webhooks.filter((w) => w.id !== id),
-    });
+    patch({ errorMessage: { ...(errorMessage ?? { body: "" }), ...p } });
   }
 
   return (
-    <fieldset className="rfb-builder-form-settings__layout rfb-builder-submission">
-      <legend>After submission</legend>
-
-      {/* ---------- Success message ---------- */}
+    <div className="rfb-builder-submission">
       <CollapsibleRow
         title="Show success message"
         enabled={!!successMessage}
@@ -212,7 +176,6 @@ export function SubmissionSettingsBlock({
         )}
       </CollapsibleRow>
 
-      {/* ---------- Redirect ---------- */}
       <CollapsibleRow
         title="Redirect to URL"
         enabled={!!successRedirect}
@@ -264,7 +227,6 @@ export function SubmissionSettingsBlock({
         )}
       </CollapsibleRow>
 
-      {/* ---------- Reset after submit ---------- */}
       <label className="rfb-builder-properties__checkbox">
         <input
           type="checkbox"
@@ -274,7 +236,6 @@ export function SubmissionSettingsBlock({
         Reset form values after submit
       </label>
 
-      {/* ---------- Error message ---------- */}
       <CollapsibleRow
         title="Custom error message"
         enabled={!!errorMessage}
@@ -313,51 +274,157 @@ export function SubmissionSettingsBlock({
           </>
         )}
       </CollapsibleRow>
-
-      {/* ---------- Email notifications ---------- */}
-      <ListSection
-        title="Email notifications"
-        count={emails.length}
-        addLabel="Add email"
-        onAdd={addEmail}
-        hint="Configured emails travel in the form schema. Your backend (SaaS API or WordPress plugin) sends them after a successful submit."
-      >
-        {emails.map((email, index) => (
-          <EmailEditor
-            key={email.id}
-            email={email}
-            index={index}
-            fieldNames={fieldNames}
-            onChange={(p) => updateEmail(email.id, p)}
-            onRemove={() => removeEmail(email.id)}
-          />
-        ))}
-      </ListSection>
-
-      {/* ---------- Webhooks ---------- */}
-      <ListSection
-        title="Webhooks"
-        count={webhooks.length}
-        addLabel="Add webhook"
-        onAdd={addWebhook}
-        hint="Webhook URLs are POSTed by your backend after a successful submit. The renderer never calls them directly."
-      >
-        {webhooks.map((webhook, index) => (
-          <WebhookEditor
-            key={webhook.id}
-            webhook={webhook}
-            index={index}
-            fieldNames={fieldNames}
-            onChange={(p) => updateWebhook(webhook.id, p)}
-            onRemove={() => removeWebhook(webhook.id)}
-          />
-        ))}
-      </ListSection>
-    </fieldset>
+    </div>
   );
 }
 
-/* ---------- Collapsible toggle row (used for message/redirect/error) ---------- */
+/* ------------------------------------------------------------------ */
+/*  Email notifications editor                                         */
+/* ------------------------------------------------------------------ */
+
+export function EmailNotificationsEditor({
+  settings,
+  formFields,
+  onSettingsPatch,
+}: SubmissionEditorProps) {
+  const submission: SubmissionSettings = settings?.submission ?? {};
+  const emails = submission.emailNotifications ?? [];
+  const fieldNames = useMemo(
+    () => formFields.map((f) => f.name).filter(Boolean),
+    [formFields],
+  );
+
+  function patch(next: EmailNotification[]) {
+    patchSubmission(settings, onSettingsPatch, {
+      emailNotifications: next,
+    });
+  }
+
+  function addEmail() {
+    patch([
+      ...emails,
+      { id: makeId("email"), to: "", subject: "", body: "" },
+    ]);
+  }
+
+  function updateEmail(id: string, p: Partial<EmailNotification>) {
+    patch(emails.map((e) => (e.id === id ? { ...e, ...p } : e)));
+  }
+
+  function removeEmail(id: string) {
+    patch(emails.filter((e) => e.id !== id));
+  }
+
+  return (
+    <div className="rfb-builder-submission rfb-builder-submission--inline">
+      {emails.length === 0 && (
+        <p className="rfb-builder-panel__hint">
+          No email notifications configured. Add one below to email the team
+          (or the submitter) when a form is submitted.
+        </p>
+      )}
+      {emails.map((email, index) => (
+        <EmailEditor
+          key={email.id}
+          email={email}
+          index={index}
+          fieldNames={fieldNames}
+          onChange={(p) => updateEmail(email.id, p)}
+          onRemove={() => removeEmail(email.id)}
+        />
+      ))}
+      <button
+        type="button"
+        className="rfb-builder-properties__option-add"
+        onClick={addEmail}
+      >
+        <IconPlus /> Add email notification
+      </button>
+      <p className="rfb-builder-panel__hint">
+        These configurations travel with the schema. Your backend (SaaS API or
+        WordPress plugin) reads <code>schema.settings.submission.emailNotifications</code>
+        and dispatches the emails after a successful submit.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Webhooks editor                                                    */
+/* ------------------------------------------------------------------ */
+
+export function WebhooksEditor({
+  settings,
+  formFields,
+  onSettingsPatch,
+}: SubmissionEditorProps) {
+  const submission: SubmissionSettings = settings?.submission ?? {};
+  const webhooks = submission.webhooks ?? [];
+  const fieldNames = useMemo(
+    () => formFields.map((f) => f.name).filter(Boolean),
+    [formFields],
+  );
+
+  function patch(next: WebhookConfig[]) {
+    patchSubmission(settings, onSettingsPatch, { webhooks: next });
+  }
+
+  function addWebhook() {
+    patch([
+      ...webhooks,
+      {
+        id: makeId("webhook"),
+        url: "",
+        method: "POST",
+        failOpen: true,
+      },
+    ]);
+  }
+
+  function updateWebhook(id: string, p: Partial<WebhookConfig>) {
+    patch(webhooks.map((w) => (w.id === id ? { ...w, ...p } : w)));
+  }
+
+  function removeWebhook(id: string) {
+    patch(webhooks.filter((w) => w.id !== id));
+  }
+
+  return (
+    <div className="rfb-builder-submission rfb-builder-submission--inline">
+      {webhooks.length === 0 && (
+        <p className="rfb-builder-panel__hint">
+          No webhooks configured. Add one below to POST the response to a
+          custom endpoint (Zapier, Make, your own service, etc.).
+        </p>
+      )}
+      {webhooks.map((webhook, index) => (
+        <WebhookEditor
+          key={webhook.id}
+          webhook={webhook}
+          index={index}
+          fieldNames={fieldNames}
+          onChange={(p) => updateWebhook(webhook.id, p)}
+          onRemove={() => removeWebhook(webhook.id)}
+        />
+      ))}
+      <button
+        type="button"
+        className="rfb-builder-properties__option-add"
+        onClick={addWebhook}
+      >
+        <IconPlus /> Add webhook
+      </button>
+      <p className="rfb-builder-panel__hint">
+        Webhooks are POSTed by your backend after a successful submit. The
+        renderer never calls them directly.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Internal building blocks                                           */
+/* ------------------------------------------------------------------ */
 
 interface CollapsibleRowProps {
   title: string;
@@ -390,64 +457,6 @@ function CollapsibleRow({
     </div>
   );
 }
-
-/* ---------- List section (emails / webhooks) ---------- */
-
-interface ListSectionProps {
-  title: string;
-  count: number;
-  addLabel: string;
-  onAdd: () => void;
-  hint?: string;
-  children?: React.ReactNode;
-}
-
-function ListSection({
-  title,
-  count,
-  addLabel,
-  onAdd,
-  hint,
-  children,
-}: ListSectionProps) {
-  const [open, setOpen] = useState<boolean>(count > 0);
-  return (
-    <div
-      className={`rfb-builder-submission__list${open ? " rfb-builder-submission__list--open" : ""}`}
-    >
-      <button
-        type="button"
-        className="rfb-builder-submission__list-header"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <span
-          className="rfb-builder-submission__list-chevron"
-          aria-hidden="true"
-        >
-          <IconChevronDown />
-        </span>
-        <span className="rfb-builder-submission__list-title">{title}</span>
-        <span className="rfb-builder-submission__list-count">{count}</span>
-      </button>
-      {open && (
-        <div className="rfb-builder-submission__list-body">
-          {children}
-          <button
-            type="button"
-            className="rfb-builder-properties__option-add"
-            onClick={onAdd}
-          >
-            <IconPlus /> {addLabel}
-          </button>
-          {hint && <p className="rfb-builder-panel__hint">{hint}</p>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- Email editor ---------- */
 
 interface EmailEditorProps {
   email: EmailNotification;
@@ -561,8 +570,6 @@ function EmailEditor({
     </div>
   );
 }
-
-/* ---------- Webhook editor ---------- */
 
 interface WebhookEditorProps {
   webhook: WebhookConfig;
@@ -707,8 +714,6 @@ function WebhookEditor({
   );
 }
 
-/* ---------- Optional gating condition (only send when X) ---------- */
-
 interface ConditionEditorProps {
   condition: SubmissionCondition | undefined;
   fieldNames: string[];
@@ -794,8 +799,6 @@ function ConditionEditor({
   );
 }
 
-/* ---------- Token hint ---------- */
-
 function TokenHint({ fieldNames }: { fieldNames: string[] }) {
   if (fieldNames.length === 0) return null;
   return (
@@ -809,5 +812,71 @@ function TokenHint({ fieldNames }: { fieldNames: string[] }) {
       ))}
       {fieldNames.length > 6 && <em> + {fieldNames.length - 6} more</em>}
     </p>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Re-export of the legacy combined block (kept for backwards compat)*/
+/* ------------------------------------------------------------------ */
+
+/**
+ * @deprecated Use {@link SubmissionBehaviorBlock} +
+ * {@link EmailNotificationsEditor} + {@link WebhooksEditor} directly.
+ * Retained so existing imports keep working.
+ */
+export function SubmissionSettingsBlock(props: SubmissionEditorProps) {
+  return (
+    <fieldset className="rfb-builder-form-settings__layout rfb-builder-submission">
+      <legend>After submission</legend>
+      <SubmissionBehaviorBlock {...props} />
+      <ListSection
+        title="Email notifications"
+        count={props.settings?.submission?.emailNotifications?.length ?? 0}
+      >
+        <EmailNotificationsEditor {...props} />
+      </ListSection>
+      <ListSection
+        title="Webhooks"
+        count={props.settings?.submission?.webhooks?.length ?? 0}
+      >
+        <WebhooksEditor {...props} />
+      </ListSection>
+    </fieldset>
+  );
+}
+
+function ListSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState<boolean>(count > 0);
+  return (
+    <div
+      className={`rfb-builder-submission__list${open ? " rfb-builder-submission__list--open" : ""}`}
+    >
+      <button
+        type="button"
+        className="rfb-builder-submission__list-header"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span
+          className="rfb-builder-submission__list-chevron"
+          aria-hidden="true"
+        >
+          <IconChevronDown />
+        </span>
+        <span className="rfb-builder-submission__list-title">{title}</span>
+        <span className="rfb-builder-submission__list-count">{count}</span>
+      </button>
+      {open && (
+        <div className="rfb-builder-submission__list-body">{children}</div>
+      )}
+    </div>
   );
 }

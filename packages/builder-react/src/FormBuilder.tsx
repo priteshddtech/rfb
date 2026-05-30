@@ -26,8 +26,9 @@ import {
 import { BuilderCanvas } from "./components/BuilderCanvas.js";
 import { BuilderPreview } from "./components/BuilderPreview.js";
 import { PropertyPanel } from "./components/PropertyPanel.js";
+import { SettingsView } from "./components/SettingsView.js";
 import { StepsBar } from "./components/StepsBar.js";
-import { Toolbox, type ToolboxPanel } from "./components/Toolbox.js";
+import { Toolbox } from "./components/Toolbox.js";
 import {
   IconClipboard,
   IconCloud,
@@ -37,6 +38,7 @@ import {
   IconPlus,
   IconRedo,
   IconSave,
+  IconSettings,
   IconText,
   IconUndo,
 } from "./icons.js";
@@ -93,10 +95,9 @@ export function FormBuilder({
 
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [leftPanel, setLeftPanel] = useState<ToolboxPanel>("components");
-  const [activeTab, setActiveTab] = useState<"edit" | "preview" | "json">(
-    "edit",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "edit" | "preview" | "json" | "settings"
+  >("edit");
   const [past, setPast] = useState<FormSchema[]>([]);
   const [future, setFuture] = useState<FormSchema[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -512,6 +513,23 @@ export function FormBuilder({
             <span className="rfb-builder__divider" />
             <button
               type="button"
+              className={[
+                "rfb-builder__icon-btn",
+                activeTab === "settings" && "rfb-builder__icon-btn--active",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() =>
+                setActiveTab((t) => (t === "settings" ? "edit" : "settings"))
+              }
+              title="Form settings"
+              aria-label="Form settings"
+              aria-pressed={activeTab === "settings"}
+            >
+              <IconSettings />
+            </button>
+            <button
+              type="button"
               className="rfb-builder__primary-btn"
               onClick={handleSave}
               title="Save"
@@ -523,27 +541,7 @@ export function FormBuilder({
 
         {activeTab === "edit" && (
           <div className="rfb-builder__workspace">
-            <Toolbox
-              activePanel={leftPanel}
-              onPanelChange={setLeftPanel}
-              fields={DEFAULT_TOOLBOX_FIELDS}
-              formTitle={schema.title ?? ""}
-              formDescription={schema.description ?? ""}
-              formId={schema.id}
-              formVersion={schema.version}
-              layoutType={layoutType}
-              formSettings={schema.settings}
-              formFields={schema.fields}
-              onFormPatch={(patch) => updateSchema({ ...schema, ...patch })}
-              onMetaPatch={(patch) => updateSchema({ ...schema, ...patch })}
-              onLayoutTypeChange={handleLayoutTypeChange}
-              onSettingsPatch={(patch) =>
-                updateSchema({
-                  ...schema,
-                  settings: { ...schema.settings, ...patch },
-                })
-              }
-            />
+            <Toolbox fields={DEFAULT_TOOLBOX_FIELDS} />
             <div className="rfb-builder__canvas-column">
               {isPaged && (
                 <StepsBar
@@ -583,9 +581,7 @@ export function FormBuilder({
         )}
 
         {activeTab === "preview" && showPreview && (
-          <div className="rfb-builder__single-panel">
-            <BuilderPreview schema={schema} />
-          </div>
+          <BuilderPreview schema={schema} />
         )}
 
         {activeTab === "json" && (
@@ -594,6 +590,24 @@ export function FormBuilder({
               {JSON.stringify(schema, null, 2)}
             </pre>
           </div>
+        )}
+
+        {activeTab === "settings" && (
+          <SettingsView
+            schema={schema}
+            formFields={schema.fields}
+            onSchemaPatch={(patch) => updateSchema({ ...schema, ...patch })}
+            onSettingsPatch={(patch) =>
+              updateSchema({
+                ...schema,
+                settings: { ...schema.settings, ...patch },
+              })
+            }
+            onLayoutTypeChange={handleLayoutTypeChange}
+            onReplaceSchema={(next) => updateSchema(next)}
+            onExportJson={handleExportJson}
+            onImportJson={handlePasteJson}
+          />
         )}
       </div>
 
