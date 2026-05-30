@@ -420,3 +420,17 @@ export const IconCaptcha = (p: IconProps) => (
     <path d="M12.5 11h6M12.5 14h4" />
   </svg>
 );
+export const IconRepeater = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="4" width="18" height="5" rx="1" />
+    <rect x="3" y="10.5" width="18" height="5" rx="1" />
+    <path d="M7 19h10" />
+    <path d="M9 19l-2-2M9 19l-2 2M15 19l2-2M15 19l2 2" />
+  </svg>
+);
+export const IconPencil = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);

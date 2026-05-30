@@ -22,6 +22,7 @@ import { PhotoFieldComponent } from "../components/PhotoField.js";
 import { RadioFieldComponent } from "../components/RadioField.js";
 import { RatingFieldComponent } from "../components/RatingField.js";
 import { RecaptchaFieldComponent } from "../components/RecaptchaField.js";
+import { RepeaterFieldComponent } from "../components/RepeaterField.js";
 import { ScaleFieldComponent } from "../components/ScaleField.js";
 import { SelectFieldComponent } from "../components/SelectField.js";
 import { SignatureFieldComponent } from "../components/SignatureField.js";
@@ -74,6 +75,7 @@ export const basicFieldComponentMap: Record<string, FieldComponent> = {
   countdown: CountdownFieldComponent as FieldComponent,
   matrix: MatrixFieldComponent as FieldComponent,
   recaptcha: RecaptchaFieldComponent as FieldComponent,
+  repeater: RepeaterFieldComponent as FieldComponent,
 };
 
 export function registerBasicFieldComponents(

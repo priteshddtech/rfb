@@ -525,6 +525,34 @@ export interface RecaptchaField extends FieldBase {
   theme?: "light" | "dark";
 }
 
+/**
+ * Repeater (a.k.a. field array / sub-form). The value is an array of objects,
+ * one per row, where each object is keyed by the child field's `name`.
+ *
+ * Example shape submitted for `name: "items"`:
+ * ```json
+ * { "items": [{ "item": "Pen", "qty": 2, "rate": 10, "amount": 20 }] }
+ * ```
+ */
+export interface RepeaterField extends FieldBase {
+  type: "repeater";
+  /** Template fields rendered once per row. Each must have a unique `name`. */
+  fields: FormField[];
+  /** Vertical = one card per row; horizontal = one table-style row. Default: vertical. */
+  display?: "vertical" | "horizontal";
+  /** Min/max enforced by the renderer's add/remove buttons. */
+  minRows?: number;
+  maxRows?: number;
+  /** Number of rows rendered when the form first loads. Default: 1. */
+  initialRows?: number;
+  /** Button label used to add another row. Default: "Add row". */
+  addLabel?: string;
+  /** Button label used to remove a row. Default: "Remove". */
+  removeLabel?: string;
+  /** Show a row index column in horizontal layout. Default: false. */
+  showRowNumbers?: boolean;
+}
+
 /** Canvas-based signature pad. The value is a base64-encoded PNG data URL. */
 export interface SignatureField extends FieldBase {
   type: "signature";
@@ -582,7 +610,8 @@ export type BuiltinFormField =
   | PdfField
   | CountdownField
   | MatrixField
-  | RecaptchaField;
+  | RecaptchaField
+  | RepeaterField;
 
 /** Any field, including plugin-defined `type` values. */
 export type FormField = BuiltinFormField | CustomField;

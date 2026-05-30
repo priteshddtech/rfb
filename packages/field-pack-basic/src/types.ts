@@ -67,6 +67,7 @@ export const BASIC_FIELD_TYPES = [
   "countdown",
   "matrix",
   "recaptcha",
+  "repeater",
 ] as const;
 
 export type BasicFieldType = (typeof BASIC_FIELD_TYPES)[number];

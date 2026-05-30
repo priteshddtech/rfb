@@ -1,4 +1,8 @@
-export { BasicField } from "./BasicField.js";
+export {
+  BasicField,
+  FieldRegistryProvider,
+  useFieldRegistry,
+} from "./BasicField.js";
 export type { BasicFieldProps } from "./BasicField.js";
 
 export { FieldWrapper, fieldControlId } from "./FieldWrapper.js";
@@ -64,3 +68,4 @@ export { PdfFieldComponent } from "./components/PdfField.js";
 export { CountdownFieldComponent } from "./components/CountdownField.js";
 export { MatrixFieldComponent } from "./components/MatrixField.js";
 export { RecaptchaFieldComponent } from "./components/RecaptchaField.js";
+export { RepeaterFieldComponent } from "./components/RepeaterField.js";

@@ -69,6 +69,7 @@ export type {
   RadioField,
   RatingField,
   RecaptchaField,
+  RepeaterField,
   RichTextToolbarButton,
   ScaleField,
   SelectField,

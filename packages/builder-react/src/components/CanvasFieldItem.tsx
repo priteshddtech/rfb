@@ -126,6 +126,16 @@ export function CanvasFieldItem({
         </span>
       )}
 
+      {field.type === "repeater" && "fields" in field && (
+        <span
+          className="rfb-builder-canvas__item-badge rfb-builder-canvas__item-badge--repeater"
+          title="Repeater field — submitted as an array of objects"
+        >
+          ⟳ Repeater · {(field as { fields?: unknown[] }).fields?.length ?? 0}{" "}
+          children
+        </span>
+      )}
+
       <div
         className="rfb-builder-canvas__item-drag"
         {...attributes}

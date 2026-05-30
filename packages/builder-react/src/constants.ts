@@ -26,6 +26,7 @@ import {
   IconPdf,
   IconPhone,
   IconRadio,
+  IconRepeater,
   IconRichText,
   IconScale,
   IconShield,
@@ -311,6 +312,12 @@ const META: Record<string, ToolboxMetaConfig> = {
     description: "Bot protection",
     group: "advanced",
     icon: IconCaptcha,
+  },
+  repeater: {
+    label: "Repeater",
+    description: "Repeating group of fields (invoice items, contacts…)",
+    group: "layout",
+    icon: IconRepeater,
   },
 };
 

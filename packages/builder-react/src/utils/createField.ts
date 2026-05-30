@@ -375,6 +375,64 @@ export function createDefaultField(
         variant: "v2-checkbox",
         theme: "light",
       };
+    case "repeater": {
+      // Seed with the canonical invoice-style template so the field is
+      // immediately useful out of the box. Users can edit the children
+      // afterwards from the property panel.
+      const childIdSeed = Date.now();
+      const childFields: FormField[] = [
+        {
+          id: `field_${childIdSeed}_r1`,
+          type: "text",
+          name: "item",
+          dbField: "item",
+          label: "Item",
+          placeholder: "Item name",
+          props: { gridSpan: 12 },
+        },
+        {
+          id: `field_${childIdSeed}_r2`,
+          type: "number",
+          name: "qty",
+          dbField: "qty",
+          label: "Qty",
+          props: { gridSpan: 12 },
+          defaultValue: 1,
+        },
+        {
+          id: `field_${childIdSeed}_r3`,
+          type: "number",
+          name: "rate",
+          dbField: "rate",
+          label: "Rate",
+          props: { gridSpan: 12 },
+          defaultValue: 0,
+        },
+        {
+          id: `field_${childIdSeed}_r4`,
+          type: "number",
+          name: "amount",
+          dbField: "amount",
+          label: "Amount",
+          props: { gridSpan: 12 },
+          defaultValue: 0,
+        },
+      ];
+      return {
+        ...base,
+        type: "repeater",
+        label: "Items",
+        fields: childFields,
+        display: "horizontal",
+        minRows: 1,
+        maxRows: 50,
+        initialRows: 1,
+        addLabel: "Add row",
+        removeLabel: "Remove",
+        showRowNumbers: true,
+        defaultValue: [],
+      } as FormField;
+    }
     case "text":
     default:
       return { ...base, type: "text", placeholder: "" };

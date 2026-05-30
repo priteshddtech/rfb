@@ -115,6 +115,13 @@ const builtinDefinitions: FieldTypeDefinition[] = [
   { type: "youtube", isInput: false },
   { type: "pdf", isInput: false },
   { type: "countdown", isInput: false },
+  /* Repeater (field array) — stores an array of row objects. */
+  {
+    type: "repeater",
+    isInput: true,
+    getDefaultValue: (field: FormField) =>
+      (field.defaultValue as unknown[] | undefined) ?? [],
+  },
 ];
 
 export function registerBuiltinFieldTypes(registry: FieldRegistry): void {

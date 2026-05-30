@@ -17,7 +17,15 @@ import type {
 } from "@rfb-ddt/schema";
 import { useMemo, useState } from "react";
 import { FIELD_ICONS } from "../constants.js";
-import { IconPlus, IconTrash } from "../icons.js";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconChevronLeft,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from "../icons.js";
+import { createDefaultField } from "../utils/createField.js";
 import { isDefaultFieldName, labelToName } from "../utils/naming.js";
 
 export interface PropertyPanelProps {
@@ -28,6 +36,13 @@ export interface PropertyPanelProps {
   pages?: FormPage[];
   onChange: (patch: Partial<FormField>) => void;
   onDelete: () => void;
+  /**
+   * When the panel is rendering a *child* of a container field (e.g. a row
+   * inside a `repeater`), this callback navigates back to the parent.
+   */
+  onBack?: () => void;
+  /** Optional crumb text shown next to the back button. */
+  backLabel?: string;
 }
 
 type Tab =
@@ -68,8 +83,53 @@ export function PropertyPanel({
   pages,
   onChange,
   onDelete,
+  onBack,
+  backLabel,
 }: PropertyPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("properties");
+  const [editingChildId, setEditingChildId] = useState<string | null>(null);
+
+  /* ---------- Repeater children helpers ---------- */
+  const isRepeater = field?.type === "repeater";
+  const childFields: FormField[] =
+    isRepeater && field && "fields" in field
+      ? ((field as { fields?: FormField[] }).fields ?? [])
+      : [];
+
+  function patchChildren(next: FormField[]) {
+    onChange({ fields: next } as Partial<FormField>);
+  }
+
+  function addChild(type: string) {
+    if (!isRepeater) return;
+    const created = createDefaultField(type, childFields);
+    patchChildren([...childFields, created]);
+  }
+
+  function updateChild(childId: string, patch: Partial<FormField>) {
+    if (!isRepeater) return;
+    patchChildren(
+      childFields.map((c) =>
+        c.id === childId ? ({ ...c, ...patch } as FormField) : c,
+      ),
+    );
+  }
+
+  function removeChild(childId: string) {
+    if (!isRepeater) return;
+    patchChildren(childFields.filter((c) => c.id !== childId));
+  }
+
+  function moveChild(childId: string, dir: "up" | "down") {
+    if (!isRepeater) return;
+    const idx = childFields.findIndex((c) => c.id === childId);
+    if (idx < 0) return;
+    const swap = dir === "up" ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= childFields.length) return;
+    const next = [...childFields];
+    [next[idx], next[swap]] = [next[swap]!, next[idx]!];
+    patchChildren(next);
+  }
 
   const validations = useMemo(
     () => field?.validation ?? [],
@@ -158,6 +218,29 @@ export function PropertyPanel({
     );
   }
 
+  /* If a repeater-child is being edited, drill in by recursively rendering
+   * the same PropertyPanel for that child. The recursive panel gets an
+   * `onBack` so the user can return to the repeater. */
+  if (isRepeater && editingChildId) {
+    const editing = childFields.find((c) => c.id === editingChildId);
+    if (editing) {
+      return (
+        <PropertyPanel
+          field={editing}
+          allFields={[...(allFields ?? []), ...childFields]}
+          pages={pages}
+          onChange={(patch) => updateChild(editing.id, patch)}
+          onDelete={() => {
+            removeChild(editing.id);
+            setEditingChildId(null);
+          }}
+          onBack={() => setEditingChildId(null)}
+          backLabel={field.label ?? field.name ?? "Repeater"}
+        />
+      );
+    }
+  }
+
   const Icon = FIELD_ICONS[field.type];
   const hasOptions = OPTION_TYPES.has(field.type) && "options" in field;
   const options = hasOptions ? ((field as { options: SelectOption[] }).options ?? []) : [];
@@ -193,6 +276,24 @@ export function PropertyPanel({
 
   return (
     <aside className="rfb-builder-properties">
+      {onBack && (
+        <div className="rfb-builder-properties__breadcrumb">
+          <button
+            type="button"
+            className="rfb-builder-properties__back"
+            onClick={onBack}
+            aria-label="Back to parent field"
+          >
+            <IconChevronLeft />
+            <span>Back</span>
+          </button>
+          {backLabel && (
+            <span className="rfb-builder-properties__crumb">
+              {backLabel} <span aria-hidden>/</span> child field
+            </span>
+          )}
+        </div>
+      )}
       <header className="rfb-builder-properties__header">
         {Icon && (
           <span className="rfb-builder-properties__icon" aria-hidden="true">
@@ -331,6 +432,18 @@ export function PropertyPanel({
 
             <StaticFieldControls field={field} onChange={onChange} />
             <TypeSpecificControls field={field} onChange={onChange} />
+
+            {isRepeater && (
+              <RepeaterPropertiesBlock
+                field={field}
+                childFields={childFields}
+                onChange={onChange}
+                onEditChild={(id) => setEditingChildId(id)}
+                onAddChild={addChild}
+                onRemoveChild={removeChild}
+                onMoveChild={moveChild}
+              />
+            )}
 
             {hasOptions && (
               <OptionsEditor
@@ -2301,6 +2414,304 @@ function makeId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 6)}`;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Repeater properties block
+ *  Renders inside the Properties tab when the selected field is a repeater.
+ *  Exposes layout / row-limit settings AND the child field manager (the
+ *  list of fields rendered inside each row). Children themselves are edited
+ *  by drilling in — the parent panel recursively renders itself for the
+ *  selected child.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+interface RepeaterPropertiesBlockProps {
+  field: FormField;
+  childFields: FormField[];
+  onChange: (patch: Partial<FormField>) => void;
+  onEditChild: (childId: string) => void;
+  onAddChild: (type: string) => void;
+  onRemoveChild: (childId: string) => void;
+  onMoveChild: (childId: string, dir: "up" | "down") => void;
+}
+
+/** Field types offered when adding a new child to a repeater. */
+const REPEATER_CHILD_TYPES: { type: string; label: string }[] = [
+  { type: "text", label: "Text" },
+  { type: "textarea", label: "Textarea" },
+  { type: "number", label: "Number" },
+  { type: "email", label: "Email" },
+  { type: "phone", label: "Phone" },
+  { type: "url", label: "URL" },
+  { type: "date", label: "Date" },
+  { type: "time", label: "Time" },
+  { type: "select", label: "Select" },
+  { type: "radio", label: "Radio" },
+  { type: "checkbox", label: "Checkbox" },
+  { type: "checkboxGroup", label: "Checkbox group" },
+  { type: "file", label: "File" },
+  { type: "rating", label: "Rating" },
+  { type: "slider", label: "Slider" },
+  { type: "scale", label: "Scale" },
+  { type: "color", label: "Color" },
+  { type: "signature", label: "Signature" },
+];
+
+function RepeaterPropertiesBlock({
+  field,
+  childFields,
+  onChange,
+  onEditChild,
+  onAddChild,
+  onRemoveChild,
+  onMoveChild,
+}: RepeaterPropertiesBlockProps) {
+  const f = field as {
+    display?: "vertical" | "horizontal";
+    minRows?: number;
+    maxRows?: number;
+    initialRows?: number;
+    addLabel?: string;
+    removeLabel?: string;
+    showRowNumbers?: boolean;
+  };
+  const [picking, setPicking] = useState(false);
+
+  return (
+    <>
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">
+          Repeater layout
+        </h4>
+
+        <label className="rfb-builder-properties__field">
+          <span>Display</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={f.display ?? "vertical"}
+            onChange={(e) =>
+              onChange({
+                display: e.target.value as "vertical" | "horizontal",
+              } as Partial<FormField>)
+            }
+          >
+            <option value="vertical">Vertical (one card per row)</option>
+            <option value="horizontal">Horizontal (table)</option>
+          </select>
+        </label>
+
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Min rows</span>
+            <input
+              type="number"
+              min={0}
+              value={f.minRows ?? 0}
+              onChange={(e) =>
+                onChange({
+                  minRows: Math.max(0, Number(e.target.value) || 0),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Max rows</span>
+            <input
+              type="number"
+              min={0}
+              value={f.maxRows ?? ""}
+              placeholder="∞"
+              onChange={(e) =>
+                onChange({
+                  maxRows: e.target.value
+                    ? Math.max(0, Number(e.target.value) || 0)
+                    : undefined,
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Initial rows</span>
+            <input
+              type="number"
+              min={0}
+              value={f.initialRows ?? 1}
+              onChange={(e) =>
+                onChange({
+                  initialRows: Math.max(0, Number(e.target.value) || 0),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Add button label</span>
+            <input
+              type="text"
+              value={f.addLabel ?? ""}
+              placeholder="Add row"
+              onChange={(e) =>
+                onChange({
+                  addLabel: e.target.value || undefined,
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Remove button label</span>
+            <input
+              type="text"
+              value={f.removeLabel ?? ""}
+              placeholder="Remove"
+              onChange={(e) =>
+                onChange({
+                  removeLabel: e.target.value || undefined,
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={f.showRowNumbers === true}
+            onChange={(e) =>
+              onChange({
+                showRowNumbers: e.target.checked,
+              } as Partial<FormField>)
+            }
+          />
+          Show row numbers
+        </label>
+      </section>
+
+      <section className="rfb-builder-properties__section rfb-builder-repeater-children">
+        <h4 className="rfb-builder-properties__section-title">
+          Child fields
+          <span className="rfb-builder-repeater-children__count">
+            {childFields.length}
+          </span>
+        </h4>
+        <p className="rfb-builder-panel__hint">
+          These fields are rendered once per row. The submitted JSON for{" "}
+          <code>{field.name}</code> will be an array of objects keyed by each
+          child's <em>name</em>.
+        </p>
+
+        {childFields.length === 0 && (
+          <p className="rfb-builder-repeater-children__empty">
+            No child fields yet. Add one below to start collecting repeating
+            data.
+          </p>
+        )}
+
+        <ul className="rfb-builder-repeater-children__list">
+          {childFields.map((child, index) => {
+            const ChildIcon = FIELD_ICONS[child.type];
+            return (
+              <li
+                key={child.id}
+                className="rfb-builder-repeater-children__item"
+              >
+                <span
+                  className="rfb-builder-repeater-children__icon"
+                  aria-hidden="true"
+                >
+                  {ChildIcon ? <ChildIcon /> : null}
+                </span>
+                <div className="rfb-builder-repeater-children__meta">
+                  <strong>{child.label || child.name}</strong>
+                  <code>
+                    {child.type} · {child.name}
+                  </code>
+                </div>
+                <div className="rfb-builder-repeater-children__actions">
+                  <button
+                    type="button"
+                    className="rfb-builder-canvas__item-action"
+                    onClick={() => onMoveChild(child.id, "up")}
+                    disabled={index === 0}
+                    aria-label="Move child up"
+                    title="Move up"
+                  >
+                    <IconArrowUp />
+                  </button>
+                  <button
+                    type="button"
+                    className="rfb-builder-canvas__item-action"
+                    onClick={() => onMoveChild(child.id, "down")}
+                    disabled={index === childFields.length - 1}
+                    aria-label="Move child down"
+                    title="Move down"
+                  >
+                    <IconArrowDown />
+                  </button>
+                  <button
+                    type="button"
+                    className="rfb-builder-canvas__item-action"
+                    onClick={() => onEditChild(child.id)}
+                    aria-label="Edit child"
+                    title="Edit"
+                  >
+                    <IconPencil />
+                  </button>
+                  <button
+                    type="button"
+                    className="rfb-builder-canvas__item-action rfb-builder-canvas__item-action--danger"
+                    onClick={() => onRemoveChild(child.id)}
+                    aria-label="Remove child"
+                    title="Remove"
+                  >
+                    <IconTrash />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {!picking ? (
+          <button
+            type="button"
+            className="rfb-builder-properties__option-add"
+            onClick={() => setPicking(true)}
+          >
+            <IconPlus /> Add child field
+          </button>
+        ) : (
+          <div className="rfb-builder-repeater-children__picker">
+            {REPEATER_CHILD_TYPES.map((t) => {
+              const TypeIcon = FIELD_ICONS[t.type];
+              return (
+                <button
+                  key={t.type}
+                  type="button"
+                  className="rfb-builder-repeater-children__picker-item"
+                  onClick={() => {
+                    onAddChild(t.type);
+                    setPicking(false);
+                  }}
+                >
+                  {TypeIcon && <TypeIcon />}
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className="rfb-builder-repeater-children__picker-cancel"
+              onClick={() => setPicking(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </section>
+    </>
+  );
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
