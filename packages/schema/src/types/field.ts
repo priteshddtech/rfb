@@ -412,6 +412,119 @@ export interface SpacerField extends FieldBase {
   height?: number;
 }
 
+/** Native color picker (`<input type="color">`). Value is a hex string. */
+export interface ColorField extends FieldBase {
+  type: "color";
+  /** Show the picked colour as a swatch next to the input. Default: true. */
+  showSwatch?: boolean;
+}
+
+/**
+ * Linear scale rating (Google-Forms style). Renders either a row of
+ * numeric buttons or a native range slider.
+ */
+export interface ScaleField extends FieldBase {
+  type: "scale";
+  min?: number;
+  max?: number;
+  step?: number;
+  /** Label shown under the minimum value (e.g. "Not at all"). */
+  minLabel?: string;
+  /** Label shown under the maximum value (e.g. "Extremely"). */
+  maxLabel?: string;
+  /** Render as buttons (default) or a continuous range slider. */
+  display?: "buttons" | "range";
+}
+
+/**
+ * Photo capture — a file input with `accept="image/*"` and
+ * `capture` set so mobile browsers go straight to the camera.
+ */
+export interface PhotoField extends FieldBase {
+  type: "photo";
+  /** Front (`"user"`) or back (`"environment"`) camera. Default: environment. */
+  facingMode?: "environment" | "user";
+  /** Max file size in bytes (validated client-side). */
+  maxSize?: number;
+}
+
+/**
+ * Voice recorder. Uses MediaRecorder under the hood; the stored value is
+ * a base64-encoded audio blob (data URL).
+ */
+export interface VoiceField extends FieldBase {
+  type: "voice";
+  /** Hard limit in seconds. Default: 120. */
+  maxDuration?: number;
+  /** Mime type hint passed to MediaRecorder (e.g. `"audio/webm"`). */
+  mimeType?: string;
+}
+
+/** GDPR / consent checkbox with explanatory text and optional policy link. */
+export interface GdprField extends FieldBase {
+  type: "gdpr";
+  /** The consent statement rendered alongside the checkbox. */
+  consentText?: string;
+  /** Optional URL pointing to your privacy policy. */
+  policyUrl?: string;
+  /** Visible label for the policy link. */
+  policyLabel?: string;
+}
+
+/** YouTube video embed (presentational — not a submittable input). */
+export interface YoutubeField extends FieldBase {
+  type: "youtube";
+  /** Full YouTube URL or just the 11-character video id. */
+  url: string;
+  width?: number | string;
+  height?: number | string;
+  /** Show video controls. Default: true. */
+  controls?: boolean;
+}
+
+/** PDF embed (presentational). */
+export interface PdfField extends FieldBase {
+  type: "pdf";
+  url: string;
+  width?: number | string;
+  height?: number | string;
+}
+
+/** Countdown timer pointing to a target date/time. */
+export interface CountdownField extends FieldBase {
+  type: "countdown";
+  /** ISO date/time the timer counts down to. */
+  target: string;
+  /** What happens when the timer hits zero. */
+  onComplete?: "stop" | "continue";
+  /** Show "days / hours / minutes / seconds" labels. Default: true. */
+  showLabels?: boolean;
+}
+
+/** Matrix question — rows of statements × columns of choices. */
+export interface MatrixField extends FieldBase {
+  type: "matrix";
+  /** Statements asked once per row. */
+  rows: { id: string; label: string }[];
+  /** Columns are the choice options offered per row. */
+  columns: SelectOption[];
+  /** Allow multiple selections per row (checkbox matrix). */
+  multiple?: boolean;
+}
+
+/**
+ * reCAPTCHA placeholder. Real validation happens server-side; the renderer
+ * mounts the Google widget when a `siteKey` is set and otherwise shows a
+ * preview box.
+ */
+export interface RecaptchaField extends FieldBase {
+  type: "recaptcha";
+  /** Site key — without this, the widget renders as a placeholder. */
+  siteKey?: string;
+  variant?: "v2-checkbox" | "v2-invisible" | "v3";
+  theme?: "light" | "dark";
+}
+
 /** Canvas-based signature pad. The value is a base64-encoded PNG data URL. */
 export interface SignatureField extends FieldBase {
   type: "signature";
@@ -459,7 +572,17 @@ export type BuiltinFormField =
   | ParagraphField
   | DividerField
   | SpacerField
-  | SignatureField;
+  | SignatureField
+  | ColorField
+  | ScaleField
+  | PhotoField
+  | VoiceField
+  | GdprField
+  | YoutubeField
+  | PdfField
+  | CountdownField
+  | MatrixField
+  | RecaptchaField;
 
 /** Any field, including plugin-defined `type` values. */
 export type FormField = BuiltinFormField | CustomField;

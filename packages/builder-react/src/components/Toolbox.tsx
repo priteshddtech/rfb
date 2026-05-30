@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { DEFAULT_TOOLBOX_FIELDS } from "../constants.js";
-import { IconChevronDown } from "../icons.js";
+import { useMemo, useState } from "react";
+import { DEFAULT_TOOLBOX_FIELDS, type ToolboxGroup } from "../constants.js";
+import { IconChevronDown, IconSearch, IconX } from "../icons.js";
 import type { ToolboxFieldMeta } from "../types.js";
 import { ToolboxItem } from "./ToolboxItem.js";
 
@@ -9,69 +9,124 @@ export interface ToolboxProps {
 }
 
 const GROUP_LABELS: Record<string, string> = {
+  quick: "Quick Fields",
   input: "Inputs",
   choice: "Choices",
   layout: "Layout",
   static: "Static",
+  media: "Media",
   advanced: "Advanced",
 };
 
-/** Order of groups in the accordion. */
-const GROUP_ORDER: readonly string[] = [
+/** Order of groups in the accordion (top → bottom). */
+const GROUP_ORDER: ToolboxGroup[] = [
+  "quick",
   "input",
   "choice",
-  "layout",
+  "media",
   "static",
+  "layout",
   "advanced",
 ];
 
 /**
- * Left-side toolbox — just the field palette. All form-level settings
- * (general, layout, modal, meta, submission, integrations, publish) now live
- * in the top-right gear icon and are rendered by `<SettingsView>`.
+ * Left-side toolbox: searchable field palette with grouped accordions.
+ * Form-level settings live behind the gear icon (`<SettingsView>`); the
+ * toolbox is dedicated to discovering and dragging fields.
  */
-export function Toolbox({
-  fields = DEFAULT_TOOLBOX_FIELDS,
-}: ToolboxProps) {
-  const groups = fields.reduce<Record<string, ToolboxFieldMeta[]>>(
-    (acc, field) => {
-      const key = field.group ?? "advanced";
-      acc[key] = [...(acc[key] ?? []), field];
-      return acc;
-    },
-    {},
+export function Toolbox({ fields = DEFAULT_TOOLBOX_FIELDS }: ToolboxProps) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    if (!q) return fields;
+    return fields.filter((f) => {
+      const haystack = [f.label, f.description, f.type].join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [fields, q]);
+
+  const groups = useMemo(() => {
+    return filtered.reduce<Record<string, ToolboxFieldMeta[]>>(
+      (acc, field) => {
+        const key = field.group ?? "advanced";
+        acc[key] = [...(acc[key] ?? []), field];
+        return acc;
+      },
+      {},
+    );
+  }, [filtered]);
+
+  const orderedGroups: string[] = useMemo(
+    () => [
+      ...GROUP_ORDER.filter((g) => groups[g]?.length),
+      ...Object.keys(groups).filter(
+        (g) => !(GROUP_ORDER as readonly string[]).includes(g),
+      ),
+    ],
+    [groups],
   );
 
-  const orderedGroups: string[] = [
-    ...GROUP_ORDER.filter((g) => groups[g]?.length),
-    ...Object.keys(groups).filter((g) => !GROUP_ORDER.includes(g)),
-  ];
-
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(orderedGroups.map((g) => [g, true])),
-  );
+  // Open every group by default; when searching, auto-open all matching groups.
+  const [closedGroups, setClosedGroups] = useState<Record<string, boolean>>({});
+  const isOpen = (group: string) =>
+    q ? true : !closedGroups[group];
 
   function toggleGroup(group: string) {
-    setOpenGroups((prev) => ({ ...prev, [group]: !(prev[group] ?? true) }));
+    if (q) return; // search auto-opens everything; ignore manual toggles
+    setClosedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
   }
 
   return (
     <aside className="rfb-builder-toolbox">
       <div className="rfb-builder-toolbox__header">
-        <span className="rfb-builder-toolbox__heading">Fields</span>
-        <p className="rfb-builder-panel__hint">Drag onto canvas</p>
+        <h2 className="rfb-builder-toolbox__heading">
+          Fields <span>(Drag into canvas)</span>
+        </h2>
+        <div className="rfb-builder-toolbox__search">
+          <span
+            className="rfb-builder-toolbox__search-icon"
+            aria-hidden="true"
+          >
+            <IconSearch />
+          </span>
+          <input
+            type="search"
+            className="rfb-builder-toolbox__search-input"
+            placeholder="Search for a field"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search fields"
+          />
+          {query && (
+            <button
+              type="button"
+              className="rfb-builder-toolbox__search-clear"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              <IconX />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rfb-builder-toolbox__body">
+        {orderedGroups.length === 0 && (
+          <p className="rfb-builder-toolbox__empty">
+            No fields match <strong>"{query}"</strong>.
+          </p>
+        )}
         {orderedGroups.map((group) => {
           const items = groups[group] ?? [];
-          const isOpen = openGroups[group] ?? true;
+          const open = isOpen(group);
           return (
             <section
               key={group}
               className={[
                 "rfb-builder-toolbox__group",
-                isOpen
+                open
                   ? "rfb-builder-toolbox__group--open"
                   : "rfb-builder-toolbox__group--closed",
               ].join(" ")}
@@ -79,23 +134,20 @@ export function Toolbox({
               <button
                 type="button"
                 className="rfb-builder-toolbox__group-header"
-                aria-expanded={isOpen}
+                aria-expanded={open}
                 onClick={() => toggleGroup(group)}
               >
+                <span className="rfb-builder-toolbox__group-title">
+                  {GROUP_LABELS[group] ?? group}
+                </span>
                 <span
                   className="rfb-builder-toolbox__group-chevron"
                   aria-hidden="true"
                 >
                   <IconChevronDown />
                 </span>
-                <span className="rfb-builder-toolbox__group-title">
-                  {GROUP_LABELS[group] ?? group}
-                </span>
-                <span className="rfb-builder-toolbox__group-count">
-                  {items.length}
-                </span>
               </button>
-              {isOpen && (
+              {open && (
                 <div className="rfb-builder-toolbox__list">
                   {items.map((meta) => (
                     <ToolboxItem key={meta.type} meta={meta} />

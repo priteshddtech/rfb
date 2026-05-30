@@ -331,3 +331,92 @@ export const IconX = (p: IconProps) => (
     <path d="m6 6 12 12M18 6 6 18" />
   </svg>
 );
+export const IconUserBadge = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="9" r="3.2" />
+    <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+  </svg>
+);
+export const IconUsers = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="9" cy="9" r="3" />
+    <path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+    <circle cx="17" cy="7.5" r="2.4" />
+    <path d="M19 14.5a4 4 0 0 1 3 3.9" />
+  </svg>
+);
+export const IconAddress = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 21s-7-6.5-7-12a7 7 0 1 1 14 0c0 5.5-7 12-7 12z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </svg>
+);
+export const IconCamera = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M3 7.5h3.5l1.5-2h8l1.5 2H21v11.5H3z" />
+    <circle cx="12" cy="13.5" r="3.5" />
+  </svg>
+);
+export const IconMic = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="9.5" y="3" width="5" height="11" rx="2.5" />
+    <path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />
+  </svg>
+);
+export const IconTimer = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M10 2h4" />
+    <circle cx="12" cy="14" r="8" />
+    <path d="M12 10v4l2.5 2.5" />
+  </svg>
+);
+export const IconMatrix = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+  </svg>
+);
+export const IconColor = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="7.5" cy="9.5" r="1.3" fill="currentColor" />
+    <circle cx="12" cy="7" r="1.3" fill="currentColor" />
+    <circle cx="16.5" cy="9.5" r="1.3" fill="currentColor" />
+    <circle cx="16.5" cy="14.5" r="1.3" fill="currentColor" />
+    <circle cx="7.5" cy="14.5" r="1.3" fill="currentColor" />
+  </svg>
+);
+export const IconShield = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 3 5 6v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+export const IconYoutube = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="2.5" y="6" width="19" height="12" rx="3" />
+    <path d="m10.5 9.5 4.5 2.5-4.5 2.5z" fill="currentColor" />
+  </svg>
+);
+export const IconPdf = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M9 14h1.5a1.5 1.5 0 1 1 0 3H9zM9 17v-3M13.5 14h2M13.5 14v3M17 14h2M17 14v3M17 15.5h1.5" strokeWidth="1.4" />
+  </svg>
+);
+export const IconScale = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M3 17a9 9 0 0 1 18 0z" />
+    <path d="M12 17 9 11" />
+    <path d="M3 17h18" />
+  </svg>
+);
+export const IconCaptcha = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="6" width="18" height="12" rx="2" />
+    <rect x="5.5" y="9.5" width="5" height="5" rx="1" />
+    <path d="m6.5 12 1 1 2-2" />
+    <path d="M12.5 11h6M12.5 14h4" />
+  </svg>
+);

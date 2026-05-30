@@ -19,6 +19,92 @@ function uniqueFieldName(type: string, fields: FormField[]): string {
   return name;
 }
 
+/**
+ * Build a single text field with custom label / preferred name. Used by the
+ * Quick Fields virtual types (First Name, Last Name, etc.).
+ */
+function makeText(
+  existingFields: FormField[],
+  label: string,
+  preferredName: string,
+  extra?: Partial<FormField>,
+): FormField {
+  const id = nextFieldId();
+  const name = uniqueFieldName(preferredName, existingFields);
+  return {
+    id,
+    type: "text",
+    name,
+    dbField: name,
+    label,
+    placeholder: "",
+    props: { gridSpan: 12, group: "General" },
+    ...(extra ?? {}),
+  };
+}
+
+/**
+ * Multi-field factory. Returns one or many fields depending on the type.
+ * Composite virtual types (e.g. `address`) expand into a stack of fields.
+ */
+export function createDefaultFields(
+  type: string,
+  existingFields: FormField[],
+): FormField[] {
+  switch (type) {
+    /* ---------- Quick fields (virtual) ---------- */
+    case "firstName":
+      return [
+        makeText(existingFields, "First Name", "firstName", {
+          placeholder: "Jane",
+        }),
+      ];
+    case "lastName":
+      return [
+        makeText(existingFields, "Last Name", "lastName", {
+          placeholder: "Doe",
+        }),
+      ];
+    case "fullName":
+      return [
+        makeText(existingFields, "Full Name", "fullName", {
+          placeholder: "Jane Doe",
+        }),
+      ];
+    case "address": {
+      // Track the working list so each generated field's name is unique
+      // *relative to the existing list **plus** prior fields in this batch*.
+      const working = [...existingFields];
+      const out: FormField[] = [];
+      const push = (
+        label: string,
+        preferredName: string,
+        extra: Partial<FormField> = {},
+      ) => {
+        const f = makeText(working, label, preferredName, extra);
+        working.push(f);
+        out.push(f);
+      };
+      push("Address Line 1", "addressLine1", {
+        placeholder: "Street address",
+      });
+      push("Address Line 2", "addressLine2", {
+        placeholder: "Apt, suite, etc. (optional)",
+      });
+      push("City", "city");
+      push("State / Province", "state");
+      push("Country", "country");
+      return out;
+    }
+    default:
+      return [createDefaultField(type, existingFields)];
+  }
+}
+
+/**
+ * Single-field factory. Kept for backwards compatibility; new callers should
+ * use {@link createDefaultFields}.
+ */
 export function createDefaultField(
   type: string,
   existingFields: FormField[],
@@ -187,6 +273,107 @@ export function createDefaultField(
         type: "spacer",
         label: undefined,
         height: 24,
+      };
+    /* ---------- New field types ---------- */
+    case "color":
+      return {
+        ...base,
+        type: "color",
+        label: "Pick a color",
+        defaultValue: "#2563eb",
+        showSwatch: true,
+      };
+    case "scale":
+      return {
+        ...base,
+        type: "scale",
+        label: "Rating",
+        min: 1,
+        max: 5,
+        step: 1,
+        minLabel: "Poor",
+        maxLabel: "Excellent",
+        display: "buttons",
+      };
+    case "photo":
+      return {
+        ...base,
+        type: "photo",
+        label: "Take a photo",
+        facingMode: "environment",
+      };
+    case "voice":
+      return {
+        ...base,
+        type: "voice",
+        label: "Record a message",
+        maxDuration: 120,
+      };
+    case "gdpr":
+      return {
+        ...base,
+        type: "gdpr",
+        label: undefined,
+        consentText:
+          "I agree to the processing of my personal data in accordance with the privacy policy.",
+        policyLabel: "Privacy policy",
+        policyUrl: "",
+        required: true,
+      };
+    case "youtube":
+      return {
+        ...base,
+        type: "youtube",
+        label: "YouTube video",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        height: 315,
+      };
+    case "pdf":
+      return {
+        ...base,
+        type: "pdf",
+        label: "PDF document",
+        url: "",
+        height: 480,
+      };
+    case "countdown":
+      return {
+        ...base,
+        type: "countdown",
+        label: "Countdown",
+        target: new Date(Date.now() + 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 16),
+        showLabels: true,
+        onComplete: "stop",
+      };
+    case "matrix":
+      return {
+        ...base,
+        type: "matrix",
+        label: "Rate the following",
+        rows: [
+          { id: "r1", label: "Ease of use" },
+          { id: "r2", label: "Value for money" },
+          { id: "r3", label: "Support quality" },
+        ],
+        columns: [
+          { label: "Poor", value: "1" },
+          { label: "Okay", value: "2" },
+          { label: "Good", value: "3" },
+          { label: "Excellent", value: "4" },
+        ],
+        multiple: false,
+        defaultValue: {},
+      };
+    case "recaptcha":
+      return {
+        ...base,
+        type: "recaptcha",
+        label: undefined,
+        siteKey: "",
+        variant: "v2-checkbox",
+        theme: "light",
       };
     case "text":
     default:

@@ -19,14 +19,28 @@
   display: flex;
   flex-direction: column;
   font-family:
-    system-ui,
+    "Inter",
     -apple-system,
+    BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
     sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   color: var(--rfb-text);
   background: var(--rfb-bg);
   font-size: 13px;
+}
+
+/*
+ * Inputs inside the builder don't automatically inherit `font-family` from
+ * the wrapper, so make sure native controls (inputs, selects, textareas,
+ * buttons) pick up Inter too.
+ */
+.rfb-builder input,
+.rfb-builder select,
+.rfb-builder textarea,
+.rfb-builder button {
+  font-family: inherit;
 }
 
 .rfb-builder--fullscreen {
@@ -251,21 +265,136 @@
 /* ---------- Toolbox (left) ---------- */
 
 .rfb-builder-toolbox {
-  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.85rem 0.5rem;
+  background: var(--rfb-bg, #f4f6fb);
+  min-height: 0;
 }
 
-.rfb-builder-toolbox__body {
-  margin-top: 0.5rem;
-  overflow-y: auto;
-  flex: 1;
+.rfb-builder-toolbox__header {
+  flex: 0 0 auto;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid transparent;
 }
 
-.rfb-builder-toolbox__group {
-  margin-bottom: 0.4rem;
+.rfb-builder-toolbox__heading {
+  display: block;
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--rfb-text);
+}
+
+.rfb-builder-toolbox__heading span {
+  font-weight: 500;
+  color: var(--rfb-text-soft);
+  font-size: 0.78rem;
+}
+
+/* Search */
+.rfb-builder-toolbox__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rfb-builder-toolbox__search-icon {
+  position: absolute;
+  left: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rfb-text-muted, #9ca3af);
+  pointer-events: none;
+}
+
+.rfb-builder-toolbox__search-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.rfb-builder-toolbox__search-input {
+  width: 100%;
+  padding: 0.45rem 1.85rem 0.45rem 1.95rem;
   border: 1px solid var(--rfb-border);
-  border-radius: var(--rfb-radius);
+  border-radius: 7px;
   background: var(--rfb-surface);
-  overflow: hidden;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--rfb-text);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.rfb-builder-toolbox__search-input::placeholder {
+  color: #9ca3af;
+}
+
+.rfb-builder-toolbox__search-input:focus {
+  outline: none;
+  border-color: var(--rfb-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
+.rfb-builder-toolbox__search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.rfb-builder-toolbox__search-clear {
+  position: absolute;
+  right: 0.4rem;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--rfb-text-muted, #9ca3af);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+}
+
+.rfb-builder-toolbox__search-clear:hover {
+  background: var(--rfb-surface-2, #f3f4f6);
+  color: var(--rfb-text);
+}
+
+.rfb-builder-toolbox__search-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Body */
+.rfb-builder-toolbox__body {
+  margin-top: 0.4rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 1rem;
+}
+
+.rfb-builder-toolbox__empty {
+  padding: 0.5rem 0.25rem;
+  font-size: 0.85rem;
+  color: var(--rfb-text-soft);
+}
+
+/* Accordions — clean, no background */
+.rfb-builder-toolbox__group {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--rfb-border);
+  overflow: visible;
+}
+
+.rfb-builder-toolbox__group:last-child {
+  border-bottom: none;
 }
 
 .rfb-builder-toolbox__group-header {
@@ -273,70 +402,52 @@
   align-items: center;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.45rem 0.55rem;
-  background: var(--rfb-surface-2);
+  padding: 0.85rem 0.1rem 0.55rem;
+  background: transparent;
   border: none;
-  border-bottom: 1px solid transparent;
   font: inherit;
   cursor: pointer;
   text-align: left;
-  color: var(--rfb-text-soft);
-  transition: background 0.12s ease;
-}
-
-.rfb-builder-toolbox__group--open .rfb-builder-toolbox__group-header {
-  border-bottom-color: var(--rfb-border);
+  color: var(--rfb-text);
+  transition: color 0.12s ease;
 }
 
 .rfb-builder-toolbox__group-header:hover {
-  background: #f1f5f9;
+  color: var(--rfb-primary-dark);
+}
+
+.rfb-builder-toolbox__group-title {
+  flex: 1;
+  margin: 0;
+  font-size: 0.92rem;
   color: var(--rfb-text);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .rfb-builder-toolbox__group-chevron {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--rfb-text-muted);
+  color: var(--rfb-text-muted, #9ca3af);
   transition: transform 0.15s ease;
 }
 
 .rfb-builder-toolbox__group-chevron svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
 }
 
 .rfb-builder-toolbox__group--closed .rfb-builder-toolbox__group-chevron {
   transform: rotate(-90deg);
 }
 
-.rfb-builder-toolbox__group-title {
-  flex: 1;
-  margin: 0;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700;
-}
-
-.rfb-builder-toolbox__group-count {
-  font-size: 0.65rem;
-  color: var(--rfb-text-muted);
-  background: var(--rfb-surface);
-  border: 1px solid var(--rfb-border);
-  border-radius: 999px;
-  padding: 0.05rem 0.4rem;
-  min-width: 1.4rem;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
+/* Card grid — auto-fit, ~3 columns when the panel is wide enough */
 .rfb-builder-toolbox__list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.3rem;
-  padding: 0.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 0.5rem;
+  padding: 0.1rem 0 0.65rem;
 }
 
 .rfb-builder-toolbox__item {
@@ -344,24 +455,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.45rem;
   width: 100%;
-  padding: 0.5rem 0.4rem;
+  min-height: 80px;
+  padding: 0.7rem 0.4rem;
   border: 1px solid var(--rfb-border);
-  border-radius: var(--rfb-radius);
+  border-radius: 8px;
   background: var(--rfb-surface);
   cursor: grab;
   text-align: center;
   font: inherit;
-  color: var(--rfb-text-soft);
-  transition: all 0.12s ease;
+  color: var(--rfb-text);
+  transition:
+    border-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
 }
 
 .rfb-builder-toolbox__item:hover {
   border-color: var(--rfb-primary);
-  background: var(--rfb-primary-soft);
   color: var(--rfb-primary-dark);
-  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .rfb-builder-toolbox__item:active {
@@ -369,10 +484,10 @@
 }
 
 .rfb-builder-toolbox__item--overlay {
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-  background: var(--rfb-primary);
-  color: #fff;
+  background: var(--rfb-surface);
+  color: var(--rfb-primary-dark);
   border-color: var(--rfb-primary);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
   cursor: grabbing;
 }
 
@@ -380,16 +495,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--rfb-text-soft);
+}
+
+.rfb-builder-toolbox__item:hover .rfb-builder-toolbox__item-icon {
+  color: var(--rfb-primary);
 }
 
 .rfb-builder-toolbox__item-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .rfb-builder-toolbox__item-label {
-  font-weight: 600;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--rfb-text);
+}
+
+.rfb-builder-toolbox__item:hover .rfb-builder-toolbox__item-label {
+  color: var(--rfb-primary-dark);
 }
 
 .rfb-builder-config-block {
@@ -2338,6 +2463,25 @@
   color: var(--rfb-text-soft);
   font-variant-numeric: tabular-nums;
   margin-left: auto;
+}
+
+/* Matrix builder helpers (rows/columns inside the Property panel) */
+.rfb-builder-properties__matrix-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--rfb-border);
+  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+  background: var(--rfb-surface-2, #f9fafb);
+}
+
+.rfb-builder-properties__matrix-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--rfb-text);
 }
 
 /* Override the legacy `.rfb-builder-preview` so it just lays out the frame */

@@ -57,6 +57,16 @@ export const BASIC_FIELD_TYPES = [
   "paragraph",
   "divider",
   "spacer",
+  "color",
+  "scale",
+  "photo",
+  "voice",
+  "gdpr",
+  "youtube",
+  "pdf",
+  "countdown",
+  "matrix",
+  "recaptcha",
 ] as const;
 
 export type BasicFieldType = (typeof BASIC_FIELD_TYPES)[number];

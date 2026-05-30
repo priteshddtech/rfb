@@ -2,6 +2,21 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.rfb-renderer input,
+.rfb-renderer select,
+.rfb-renderer textarea,
+.rfb-renderer button {
+  font-family: inherit;
 }
 
 .rfb-renderer__title {

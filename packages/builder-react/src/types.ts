@@ -16,5 +16,12 @@ export interface ToolboxFieldMeta {
   type: string;
   label: string;
   description?: string;
-  group?: "input" | "choice" | "layout" | "static" | "advanced";
+  group?:
+    | "quick"
+    | "input"
+    | "choice"
+    | "layout"
+    | "static"
+    | "media"
+    | "advanced";
 }

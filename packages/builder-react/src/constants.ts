@@ -1,12 +1,16 @@
 import { BASIC_FIELD_TYPES } from "@rfb-ddt/field-pack-basic";
 import type { ComponentType, SVGProps } from "react";
 import {
+  IconAddress,
   IconCalendar,
+  IconCamera,
+  IconCaptcha,
   IconCheck,
   IconChecks,
   IconChevronDown,
   IconClock,
   IconCode,
+  IconColor,
   IconDivider,
   IconEye,
   IconHash,
@@ -16,27 +20,46 @@ import {
   IconLink,
   IconLock,
   IconMail,
+  IconMatrix,
+  IconMic,
   IconParagraph,
+  IconPdf,
   IconPhone,
   IconRadio,
   IconRichText,
+  IconScale,
+  IconShield,
   IconSignature,
   IconSlider,
   IconSpacer,
   IconStar,
   IconText,
   IconTextarea,
+  IconTimer,
   IconType,
   IconUpload,
+  IconUserBadge,
+  IconUsers,
+  IconYoutube,
 } from "./icons.js";
 import type { ToolboxFieldMeta } from "./types.js";
 
 export type FieldIcon = ComponentType<Omit<SVGProps<SVGSVGElement>, "children">>;
 
+/** Groups shown as accordions in the toolbox, in display order. */
+export type ToolboxGroup =
+  | "quick"
+  | "input"
+  | "choice"
+  | "layout"
+  | "static"
+  | "media"
+  | "advanced";
+
 interface ToolboxMetaConfig {
   label: string;
   description?: string;
-  group: "input" | "choice" | "layout" | "static" | "advanced";
+  group: ToolboxGroup;
   icon: FieldIcon;
 }
 
@@ -203,6 +226,92 @@ const META: Record<string, ToolboxMetaConfig> = {
     group: "advanced",
     icon: IconEye,
   },
+  /* ----------------------- Quick Fields ----------------------- */
+  firstName: {
+    label: "First Name",
+    description: "Given name input",
+    group: "quick",
+    icon: IconUserBadge,
+  },
+  lastName: {
+    label: "Last Name",
+    description: "Family name input",
+    group: "quick",
+    icon: IconUserBadge,
+  },
+  fullName: {
+    label: "Full Name",
+    description: "Combined name input",
+    group: "quick",
+    icon: IconUsers,
+  },
+  address: {
+    label: "Address",
+    description: "Adds 5 fields (line 1, line 2, city, state, country)",
+    group: "quick",
+    icon: IconAddress,
+  },
+  /* ----------------------- New rich fields ----------------------- */
+  color: {
+    label: "Color Picker",
+    description: "Native color input",
+    group: "input",
+    icon: IconColor,
+  },
+  scale: {
+    label: "Scale Rating",
+    description: "Linear scale 1—N",
+    group: "choice",
+    icon: IconScale,
+  },
+  photo: {
+    label: "Take a Photo",
+    description: "Camera capture",
+    group: "media",
+    icon: IconCamera,
+  },
+  voice: {
+    label: "Voice Recorder",
+    description: "Capture audio",
+    group: "media",
+    icon: IconMic,
+  },
+  gdpr: {
+    label: "GDPR Consent",
+    description: "Consent checkbox with policy link",
+    group: "advanced",
+    icon: IconShield,
+  },
+  youtube: {
+    label: "YouTube Embed",
+    description: "Embed a YouTube video",
+    group: "media",
+    icon: IconYoutube,
+  },
+  pdf: {
+    label: "PDF Embed",
+    description: "Embed a PDF file",
+    group: "media",
+    icon: IconPdf,
+  },
+  countdown: {
+    label: "Countdown Timer",
+    description: "Counts down to a target",
+    group: "static",
+    icon: IconTimer,
+  },
+  matrix: {
+    label: "Input Matrix",
+    description: "Rows × columns of choices",
+    group: "choice",
+    icon: IconMatrix,
+  },
+  recaptcha: {
+    label: "reCAPTCHA",
+    description: "Bot protection",
+    group: "advanced",
+    icon: IconCaptcha,
+  },
 };
 
 export const FIELD_ICONS: Record<string, FieldIcon> = Object.fromEntries(
@@ -215,7 +324,13 @@ export const FIELD_ICONS: Record<string, FieldIcon> = Object.fromEntries(
  * with `richText: true`). They're inserted into the toolbox manually after
  * the base list.
  */
-const VIRTUAL_TOOLBOX_TYPES = ["richtext"] as const;
+const VIRTUAL_TOOLBOX_TYPES = [
+  "richtext",
+  "firstName",
+  "lastName",
+  "fullName",
+  "address",
+] as const;
 
 export const DEFAULT_TOOLBOX_FIELDS: ToolboxFieldMeta[] = [
   ...BASIC_FIELD_TYPES.map((type) => {

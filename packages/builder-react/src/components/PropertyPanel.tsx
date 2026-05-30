@@ -50,6 +50,9 @@ const STATIC_TYPES = new Set([
   "divider",
   "spacer",
   "html",
+  "youtube",
+  "pdf",
+  "countdown",
 ]);
 
 export function PropertyPanel({
@@ -1134,6 +1137,443 @@ function TypeSpecificControls({ field, onChange }: TypeSpecificControlsProps) {
     );
   }
 
+  if (field.type === "color") {
+    const f = field as { showSwatch?: boolean };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Color picker</h4>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={f.showSwatch !== false}
+            onChange={(e) =>
+              onChange({ showSwatch: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Show swatch &amp; hex value next to picker
+        </label>
+      </section>
+    );
+  }
+
+  if (field.type === "scale") {
+    const f = field as {
+      min?: number;
+      max?: number;
+      step?: number;
+      minLabel?: string;
+      maxLabel?: string;
+      display?: "buttons" | "range";
+    };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Scale rating</h4>
+        <label className="rfb-builder-properties__field">
+          <span>Display</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={f.display ?? "buttons"}
+            onChange={(e) =>
+              onChange({
+                display: e.target.value as "buttons" | "range",
+              } as Partial<FormField>)
+            }
+          >
+            <option value="buttons">Numeric buttons</option>
+            <option value="range">Range slider</option>
+          </select>
+        </label>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Min value</span>
+            <input
+              type="number"
+              value={f.min ?? 1}
+              onChange={(e) =>
+                onChange({ min: Number(e.target.value) || 0 } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Max value</span>
+            <input
+              type="number"
+              value={f.max ?? 5}
+              onChange={(e) =>
+                onChange({ max: Number(e.target.value) || 0 } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Step</span>
+            <input
+              type="number"
+              min={1}
+              value={f.step ?? 1}
+              onChange={(e) =>
+                onChange({ step: Math.max(1, Number(e.target.value) || 1) } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Min label</span>
+            <input
+              type="text"
+              value={f.minLabel ?? ""}
+              placeholder="e.g. Poor"
+              onChange={(e) =>
+                onChange({ minLabel: e.target.value || undefined } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Max label</span>
+            <input
+              type="text"
+              value={f.maxLabel ?? ""}
+              placeholder="e.g. Excellent"
+              onChange={(e) =>
+                onChange({ maxLabel: e.target.value || undefined } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+      </section>
+    );
+  }
+
+  if (field.type === "photo") {
+    const f = field as { facingMode?: "environment" | "user"; maxSize?: number };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Photo capture</h4>
+        <label className="rfb-builder-properties__field">
+          <span>Camera</span>
+          <select
+            className="rfb-builder-properties__select"
+            value={f.facingMode ?? "environment"}
+            onChange={(e) =>
+              onChange({
+                facingMode: e.target.value as "environment" | "user",
+              } as Partial<FormField>)
+            }
+          >
+            <option value="environment">Back (environment)</option>
+            <option value="user">Front (selfie)</option>
+          </select>
+        </label>
+        <label className="rfb-builder-properties__field">
+          <span>Max file size (MB, optional)</span>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={f.maxSize ? f.maxSize / (1024 * 1024) : ""}
+            placeholder="e.g. 5"
+            onChange={(e) => {
+              const v = e.target.value;
+              onChange({
+                maxSize: v ? Math.round(Number(v) * 1024 * 1024) : undefined,
+              } as Partial<FormField>);
+            }}
+          />
+        </label>
+        <p className="rfb-builder-panel__hint">
+          On mobile browsers the field opens the device camera. On desktop it
+          falls back to a regular file picker.
+        </p>
+      </section>
+    );
+  }
+
+  if (field.type === "voice") {
+    const f = field as { maxDuration?: number; mimeType?: string };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Voice recorder</h4>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Max duration (seconds)</span>
+            <input
+              type="number"
+              min={5}
+              max={3600}
+              value={f.maxDuration ?? 120}
+              onChange={(e) =>
+                onChange({
+                  maxDuration: Math.max(5, Number(e.target.value) || 120),
+                } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Mime type (optional)</span>
+            <input
+              type="text"
+              value={f.mimeType ?? ""}
+              placeholder="audio/webm"
+              onChange={(e) =>
+                onChange({ mimeType: e.target.value || undefined } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+        <p className="rfb-builder-panel__hint">
+          The recorded audio is stored as a base64 data URL in the form
+          response.
+        </p>
+      </section>
+    );
+  }
+
+  if (field.type === "gdpr") {
+    const f = field as {
+      consentText?: string;
+      policyUrl?: string;
+      policyLabel?: string;
+    };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">GDPR consent</h4>
+        <label className="rfb-builder-properties__field">
+          <span>Consent text</span>
+          <textarea
+            rows={3}
+            value={f.consentText ?? ""}
+            onChange={(e) =>
+              onChange({ consentText: e.target.value } as Partial<FormField>)
+            }
+          />
+        </label>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Privacy policy URL</span>
+            <input
+              type="url"
+              value={f.policyUrl ?? ""}
+              placeholder="https://example.com/privacy"
+              onChange={(e) =>
+                onChange({ policyUrl: e.target.value || undefined } as Partial<FormField>)
+              }
+            />
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Link label</span>
+            <input
+              type="text"
+              value={f.policyLabel ?? ""}
+              placeholder="Privacy policy"
+              onChange={(e) =>
+                onChange({ policyLabel: e.target.value || undefined } as Partial<FormField>)
+              }
+            />
+          </label>
+        </div>
+      </section>
+    );
+  }
+
+  if (field.type === "matrix") {
+    const f = field as {
+      rows?: { id: string; label: string }[];
+      columns?: SelectOption[];
+      multiple?: boolean;
+    };
+    const rows = f.rows ?? [];
+    const columns = f.columns ?? [];
+
+    function updateRow(idx: number, patch: Partial<{ id: string; label: string }>) {
+      const next = rows.map((r, i) => (i === idx ? { ...r, ...patch } : r));
+      onChange({ rows: next } as Partial<FormField>);
+    }
+    function addRow() {
+      const id = `r${Date.now().toString(36)}`;
+      onChange({
+        rows: [...rows, { id, label: `Row ${rows.length + 1}` }],
+      } as Partial<FormField>);
+    }
+    function removeRow(idx: number) {
+      onChange({ rows: rows.filter((_, i) => i !== idx) } as Partial<FormField>);
+    }
+    function updateCol(idx: number, patch: Partial<SelectOption>) {
+      const next = columns.map((c, i) => (i === idx ? { ...c, ...patch } : c));
+      onChange({ columns: next } as Partial<FormField>);
+    }
+    function addCol() {
+      onChange({
+        columns: [
+          ...columns,
+          { label: `Choice ${columns.length + 1}`, value: String(columns.length + 1) },
+        ],
+      } as Partial<FormField>);
+    }
+    function removeCol(idx: number) {
+      onChange({
+        columns: columns.filter((_, i) => i !== idx),
+      } as Partial<FormField>);
+    }
+
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Matrix</h4>
+        <label className="rfb-builder-properties__checkbox">
+          <input
+            type="checkbox"
+            checked={!!f.multiple}
+            onChange={(e) =>
+              onChange({ multiple: e.target.checked } as Partial<FormField>)
+            }
+          />
+          Allow multiple answers per row (checkbox matrix)
+        </label>
+
+        <div className="rfb-builder-properties__matrix-block">
+          <div className="rfb-builder-properties__matrix-block-header">
+            <strong>Rows</strong>
+            <button
+              type="button"
+              className="rfb-builder-properties__option-add"
+              onClick={addRow}
+            >
+              + Add row
+            </button>
+          </div>
+          {rows.map((row, idx) => (
+            <div key={row.id} className="rfb-builder-properties__row">
+              <input
+                type="text"
+                value={row.label}
+                placeholder="Row label"
+                onChange={(e) => updateRow(idx, { label: e.target.value })}
+              />
+              <button
+                type="button"
+                className="rfb-builder-properties__delete-icon"
+                onClick={() => removeRow(idx)}
+                aria-label="Remove row"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="rfb-builder-properties__matrix-block">
+          <div className="rfb-builder-properties__matrix-block-header">
+            <strong>Columns</strong>
+            <button
+              type="button"
+              className="rfb-builder-properties__option-add"
+              onClick={addCol}
+            >
+              + Add column
+            </button>
+          </div>
+          {columns.map((col, idx) => (
+            <div key={`${idx}-${col.value}`} className="rfb-builder-properties__row">
+              <input
+                type="text"
+                value={col.label}
+                placeholder="Column label"
+                onChange={(e) => updateCol(idx, { label: e.target.value })}
+              />
+              <input
+                type="text"
+                value={String(col.value)}
+                placeholder="value"
+                onChange={(e) => updateCol(idx, { value: e.target.value })}
+              />
+              <button
+                type="button"
+                className="rfb-builder-properties__delete-icon"
+                onClick={() => removeCol(idx)}
+                aria-label="Remove column"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (field.type === "recaptcha") {
+    const f = field as {
+      siteKey?: string;
+      variant?: "v2-checkbox" | "v2-invisible" | "v3";
+      theme?: "light" | "dark";
+    };
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">reCAPTCHA</h4>
+        <label className="rfb-builder-properties__field">
+          <span>Google reCAPTCHA site key</span>
+          <input
+            type="text"
+            value={f.siteKey ?? ""}
+            placeholder="6Lc... (from google.com/recaptcha/admin)"
+            spellCheck={false}
+            onChange={(e) =>
+              onChange({ siteKey: e.target.value || undefined } as Partial<FormField>)
+            }
+          />
+        </label>
+        <div className="rfb-builder-properties__row">
+          <label className="rfb-builder-properties__field">
+            <span>Variant</span>
+            <select
+              className="rfb-builder-properties__select"
+              value={f.variant ?? "v2-checkbox"}
+              onChange={(e) =>
+                onChange({
+                  variant: e.target.value as
+                    | "v2-checkbox"
+                    | "v2-invisible"
+                    | "v3",
+                } as Partial<FormField>)
+              }
+            >
+              <option value="v2-checkbox">v2 — Checkbox ("I'm not a robot")</option>
+              <option value="v2-invisible">v2 — Invisible</option>
+              <option value="v3">v3 — Score-based</option>
+            </select>
+          </label>
+          <label className="rfb-builder-properties__field">
+            <span>Theme</span>
+            <select
+              className="rfb-builder-properties__select"
+              value={f.theme ?? "light"}
+              onChange={(e) =>
+                onChange({
+                  theme: e.target.value as "light" | "dark",
+                } as Partial<FormField>)
+              }
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
+        <p className="rfb-builder-panel__hint">
+          Get a site key (and matching secret) at{" "}
+          <a
+            href="https://www.google.com/recaptcha/admin/create"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            google.com/recaptcha/admin
+          </a>
+          . The site key is safe to put in the schema — it's used client-side.
+          Your backend uses the <em>secret</em> to verify the token at submit
+          time.
+        </p>
+      </section>
+    );
+  }
+
   return null;
 }
 
@@ -1332,9 +1772,197 @@ function StaticFieldControls({ field, onChange }: StaticFieldControlsProps) {
         </label>
       );
 
+    case "youtube": {
+      const f = field as {
+        url?: string;
+        width?: number | string;
+        height?: number | string;
+        controls?: boolean;
+      };
+      return (
+        <>
+          <label className="rfb-builder-properties__field">
+            <span>YouTube URL or video id</span>
+            <input
+              type="text"
+              value={f.url ?? ""}
+              placeholder="https://youtube.com/watch?v=… or dQw4w9WgXcQ"
+              onChange={(e) =>
+                onChange({ url: e.target.value } as Partial<FormField>)
+              }
+            />
+          </label>
+          <div className="rfb-builder-properties__row">
+            <label className="rfb-builder-properties__field">
+              <span>Width (optional)</span>
+              <input
+                type="text"
+                value={f.width ?? ""}
+                placeholder="100% or 560"
+                onChange={(e) =>
+                  onChange({
+                    width: e.target.value || undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+            <label className="rfb-builder-properties__field">
+              <span>Height (px or CSS)</span>
+              <input
+                type="text"
+                value={f.height ?? "315"}
+                placeholder="315"
+                onChange={(e) =>
+                  onChange({
+                    height: e.target.value || undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+          </div>
+          <label className="rfb-builder-properties__checkbox">
+            <input
+              type="checkbox"
+              checked={f.controls !== false}
+              onChange={(e) =>
+                onChange({ controls: e.target.checked } as Partial<FormField>)
+              }
+            />
+            Show video controls
+          </label>
+        </>
+      );
+    }
+
+    case "pdf": {
+      const f = field as {
+        url?: string;
+        width?: number | string;
+        height?: number | string;
+      };
+      return (
+        <>
+          <label className="rfb-builder-properties__field">
+            <span>PDF URL</span>
+            <input
+              type="url"
+              value={f.url ?? ""}
+              placeholder="https://example.com/file.pdf"
+              onChange={(e) =>
+                onChange({ url: e.target.value } as Partial<FormField>)
+              }
+            />
+          </label>
+          <div className="rfb-builder-properties__row">
+            <label className="rfb-builder-properties__field">
+              <span>Width</span>
+              <input
+                type="text"
+                value={f.width ?? ""}
+                placeholder="100%"
+                onChange={(e) =>
+                  onChange({
+                    width: e.target.value || undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+            <label className="rfb-builder-properties__field">
+              <span>Height</span>
+              <input
+                type="text"
+                value={f.height ?? "480"}
+                placeholder="480"
+                onChange={(e) =>
+                  onChange({
+                    height: e.target.value || undefined,
+                  } as Partial<FormField>)
+                }
+              />
+            </label>
+          </div>
+        </>
+      );
+    }
+
+    case "countdown": {
+      const f = field as {
+        target?: string;
+        showLabels?: boolean;
+        onComplete?: "stop" | "continue";
+      };
+      // `<input type="datetime-local">` wants `YYYY-MM-DDTHH:mm` (no seconds, no Z).
+      const localValue = toDatetimeLocal(f.target);
+      return (
+        <>
+          <label className="rfb-builder-properties__field">
+            <span>Target date / time</span>
+            <input
+              type="datetime-local"
+              value={localValue}
+              onChange={(e) => {
+                const v = e.target.value;
+                onChange({
+                  target: v ? new Date(v).toISOString() : "",
+                } as Partial<FormField>);
+              }}
+            />
+          </label>
+          <div className="rfb-builder-properties__row">
+            <label className="rfb-builder-properties__field">
+              <span>On complete</span>
+              <select
+                className="rfb-builder-properties__select"
+                value={f.onComplete ?? "stop"}
+                onChange={(e) =>
+                  onChange({
+                    onComplete: e.target.value as "stop" | "continue",
+                  } as Partial<FormField>)
+                }
+              >
+                <option value="stop">Stop at 00:00:00</option>
+                <option value="continue">Keep ticking (negative)</option>
+              </select>
+            </label>
+            <label className="rfb-builder-properties__checkbox">
+              <input
+                type="checkbox"
+                checked={f.showLabels !== false}
+                onChange={(e) =>
+                  onChange({
+                    showLabels: e.target.checked,
+                  } as Partial<FormField>)
+                }
+              />
+              Show unit labels (days, hours…)
+            </label>
+          </div>
+        </>
+      );
+    }
+
     default:
       return null;
   }
+}
+
+/** Convert an ISO date string into the `YYYY-MM-DDTHH:mm` local form. */
+function toDatetimeLocal(iso: string | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "";
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return [
+    date.getFullYear(),
+    "-",
+    pad(date.getMonth() + 1),
+    "-",
+    pad(date.getDate()),
+    "T",
+    pad(date.getHours()),
+    ":",
+    pad(date.getMinutes()),
+  ].join("");
 }
 
 /* ---------- CSS tab ---------- */

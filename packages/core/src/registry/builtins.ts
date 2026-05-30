@@ -74,6 +74,47 @@ const builtinDefinitions: FieldTypeDefinition[] = [
   { type: "paragraph", isInput: false },
   { type: "divider", isInput: false },
   { type: "spacer", isInput: false },
+  /* New rich field types (Add fields v2) */
+  {
+    type: "color",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? "#000000",
+  },
+  {
+    type: "scale",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? null,
+  },
+  {
+    type: "photo",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? null,
+  },
+  {
+    type: "voice",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? "",
+  },
+  {
+    type: "gdpr",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? false,
+  },
+  {
+    type: "matrix",
+    isInput: true,
+    getDefaultValue: (field: FormField) =>
+      (field.defaultValue as Record<string, unknown> | undefined) ?? {},
+  },
+  {
+    type: "recaptcha",
+    isInput: true,
+    getDefaultValue: (field: FormField) => field.defaultValue ?? "",
+  },
+  /* Presentational embeds */
+  { type: "youtube", isInput: false },
+  { type: "pdf", isInput: false },
+  { type: "countdown", isInput: false },
 ];
 
 export function registerBuiltinFieldTypes(registry: FieldRegistry): void {

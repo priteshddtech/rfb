@@ -43,7 +43,7 @@ import {
   IconUndo,
 } from "./icons.js";
 import type { FormBuilderProps } from "./types.js";
-import { createDefaultField } from "./utils/createField.js";
+import { createDefaultField, createDefaultFields } from "./utils/createField.js";
 import {
   addPage,
   duplicateFieldInPagedSchema,
@@ -224,18 +224,26 @@ export function FormBuilder({
         visibleFields.some((f) => f.id === over.id);
       if (!overCanvas) return;
 
-      const newField = createDefaultField(toolboxType, schema.fields);
-      const insertAfterId =
-        over.id !== CANVAS_DROP_ID ? String(over.id) : undefined;
+      const newFields = createDefaultFields(toolboxType, schema.fields);
+      if (newFields.length === 0) return;
 
-      const next = insertFieldInPagedSchema(
-        schema,
-        newField,
-        activePageId,
-        insertAfterId,
-      );
-      updateSchema(next);
-      setSelectedFieldId(newField.id);
+      // Insert sequentially so we can chain `insertAfterId` and keep the
+      // intended order (line 1 → line 2 → city → state → country for a
+      // composite address).
+      let current = schema;
+      let insertAfterId =
+        over.id !== CANVAS_DROP_ID ? String(over.id) : undefined;
+      for (const field of newFields) {
+        current = insertFieldInPagedSchema(
+          current,
+          field,
+          activePageId,
+          insertAfterId,
+        );
+        insertAfterId = field.id;
+      }
+      updateSchema(current);
+      setSelectedFieldId(newFields[0]!.id);
       return;
     }
 
