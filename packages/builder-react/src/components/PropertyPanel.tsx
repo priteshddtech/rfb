@@ -4,6 +4,7 @@ import type {
   FieldAction,
   FieldActionLoadOptions,
   FieldActionType,
+  FieldCondition,
   FieldEvent,
   FieldEventBinding,
   FieldId,
@@ -29,11 +30,17 @@ export interface PropertyPanelProps {
   onDelete: () => void;
 }
 
-type Tab = "properties" | "css" | "actions" | "validations";
+type Tab =
+  | "properties"
+  | "css"
+  | "conditions"
+  | "actions"
+  | "validations";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "properties", label: "Properties" },
   { id: "css", label: "CSS" },
+  { id: "conditions", label: "Conditions" },
   { id: "actions", label: "Actions" },
   { id: "validations", label: "Validations" },
 ];
@@ -355,6 +362,14 @@ export function PropertyPanel({
 
         {activeTab === "css" && (
           <CssTab field={field} onChange={onChange} />
+        )}
+
+        {activeTab === "conditions" && (
+          <ConditionsTab
+            field={field}
+            allFields={allFields ?? []}
+            onChange={onChange}
+          />
         )}
 
         {activeTab === "actions" && (
@@ -2286,6 +2301,258 @@ function makeId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 6)}`;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Conditions tab
+ *  Declarative show/hide/enable/disable rules driven by other field values.
+ *  Evaluated by `@rfb-ddt/core` (`isFieldVisible` / `isFieldDisabled`) on
+ *  every render, so users get live conditional logic with zero code.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+interface ConditionsTabProps {
+  field: FormField;
+  allFields: FormField[];
+  onChange: (patch: Partial<FormField>) => void;
+}
+
+const CONDITION_ACTIONS: { id: FieldCondition["then"]; label: string }[] = [
+  { id: "hide", label: "Hide this field" },
+  { id: "show", label: "Show this field" },
+  { id: "disable", label: "Disable this field" },
+  { id: "enable", label: "Enable this field" },
+];
+
+/** Operators that don't compare against a value. */
+const VALUELESS_OPERATORS = new Set<ConditionOperator>(["empty", "notEmpty"]);
+
+function ConditionsTab({ field, allFields, onChange }: ConditionsTabProps) {
+  const conditions: FieldCondition[] = field.conditions ?? [];
+
+  // Trigger candidates = every other field that holds a value the user can
+  // compare against. Static / presentational types are filtered out.
+  const triggerFields = useMemo(
+    () =>
+      allFields.filter(
+        (f) =>
+          f.id !== field.id &&
+          !["heading", "label", "span", "image", "paragraph", "divider", "spacer", "html", "youtube", "pdf", "countdown"].includes(
+            f.type,
+          ),
+      ),
+    [allFields, field.id],
+  );
+
+  function setConditions(next: FieldCondition[]) {
+    onChange({ conditions: next.length ? next : undefined });
+  }
+
+  function addCondition() {
+    const firstTrigger = triggerFields[0];
+    setConditions([
+      ...conditions,
+      {
+        when: {
+          fieldId: firstTrigger?.id ?? "",
+          operator: "equals",
+          value: "",
+        },
+        then: "hide",
+      },
+    ]);
+  }
+
+  function updateCondition(index: number, patch: Partial<FieldCondition>) {
+    const next = conditions.map((c, i) =>
+      i === index
+        ? {
+            ...c,
+            ...patch,
+            when: { ...c.when, ...((patch as { when?: object }).when ?? {}) },
+          }
+        : c,
+    );
+    setConditions(next);
+  }
+
+  function updateWhen(
+    index: number,
+    patch: Partial<FieldCondition["when"]>,
+  ) {
+    const next = conditions.map((c, i) =>
+      i === index ? { ...c, when: { ...c.when, ...patch } } : c,
+    );
+    setConditions(next);
+  }
+
+  function removeCondition(index: number) {
+    setConditions(conditions.filter((_, i) => i !== index));
+  }
+
+  if (triggerFields.length === 0) {
+    return (
+      <section className="rfb-builder-properties__section">
+        <h4 className="rfb-builder-properties__section-title">Conditions</h4>
+        <p className="rfb-builder-panel__hint">
+          Add at least one other input field to the form before you can create
+          conditional rules.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rfb-builder-properties__section rfb-builder-conditions">
+      <h4 className="rfb-builder-properties__section-title">Conditions</h4>
+      <p className="rfb-builder-panel__hint">
+        Show, hide, enable or disable this field automatically based on the
+        value of another field. All matching rules are applied in order.
+      </p>
+
+      {conditions.length === 0 && (
+        <p className="rfb-builder-conditions__empty">
+          No conditions yet. Click <strong>Add rule</strong> to create one — for
+          example, <em>Hide this field when</em>{" "}
+          <code>salutation</code> <em>equals</em> <code>Mr</code>.
+        </p>
+      )}
+
+      <ul className="rfb-builder-conditions__list">
+        {conditions.map((cond, index) => {
+          const trigger = triggerFields.find(
+            (f) => f.id === cond.when.fieldId,
+          );
+          const triggerOptions =
+            trigger && "options" in trigger
+              ? ((trigger as { options?: SelectOption[] }).options ?? [])
+              : [];
+          const needsValue = !VALUELESS_OPERATORS.has(cond.when.operator);
+
+          return (
+            <li key={index} className="rfb-builder-conditions__rule">
+              <header className="rfb-builder-conditions__rule-header">
+                <span className="rfb-builder-conditions__rule-index">
+                  Rule {index + 1}
+                </span>
+                <button
+                  type="button"
+                  className="rfb-builder-properties__delete-icon"
+                  onClick={() => removeCondition(index)}
+                  aria-label="Remove condition"
+                  title="Remove condition"
+                >
+                  <IconTrash />
+                </button>
+              </header>
+
+              <div className="rfb-builder-conditions__rule-grid">
+                <label className="rfb-builder-properties__field">
+                  <span>Then</span>
+                  <select
+                    className="rfb-builder-properties__select"
+                    value={cond.then}
+                    onChange={(e) =>
+                      updateCondition(index, {
+                        then: e.target.value as FieldCondition["then"],
+                      })
+                    }
+                  >
+                    {CONDITION_ACTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rfb-builder-properties__field">
+                  <span>When field</span>
+                  <select
+                    className="rfb-builder-properties__select"
+                    value={cond.when.fieldId}
+                    onChange={(e) =>
+                      updateWhen(index, { fieldId: e.target.value })
+                    }
+                  >
+                    {triggerFields.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label || f.name || f.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rfb-builder-properties__field">
+                  <span>Operator</span>
+                  <select
+                    className="rfb-builder-properties__select"
+                    value={cond.when.operator}
+                    onChange={(e) =>
+                      updateWhen(index, {
+                        operator: e.target.value as ConditionOperator,
+                      })
+                    }
+                  >
+                    {OPERATORS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                {needsValue && (
+                  <label className="rfb-builder-properties__field">
+                    <span>Value</span>
+                    {triggerOptions.length > 0 ? (
+                      <select
+                        className="rfb-builder-properties__select"
+                        value={String(cond.when.value ?? "")}
+                        onChange={(e) =>
+                          updateWhen(index, { value: e.target.value })
+                        }
+                      >
+                        <option value="">— choose —</option>
+                        {triggerOptions.map((opt) => (
+                          <option key={String(opt.value)} value={String(opt.value)}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={String(cond.when.value ?? "")}
+                        placeholder="Value to compare"
+                        onChange={(e) =>
+                          updateWhen(index, { value: e.target.value })
+                        }
+                      />
+                    )}
+                  </label>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <button
+        type="button"
+        className="rfb-builder-properties__option-add"
+        onClick={addCondition}
+      >
+        <IconPlus /> Add rule
+      </button>
+
+      {conditions.length > 1 && (
+        <p className="rfb-builder-panel__hint rfb-builder-conditions__order-hint">
+          Rules are evaluated top‑to‑bottom. The last matching rule wins for
+          each <em>show/hide</em> and each <em>enable/disable</em>.
+        </p>
+      )}
+    </section>
+  );
 }
 
 function ActionsTab({ field, allFields, pages, onChange }: ActionsTabProps) {

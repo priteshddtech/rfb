@@ -668,6 +668,16 @@
   opacity: 0;
 }
 
+/* Conditional-rules badge stays visible even on hover; uses amber tone */
+.rfb-builder-canvas__item-badge--conditional {
+  right: auto;
+  left: 12px;
+  background: #f59e0b;
+  color: #1f2937;
+  opacity: 1 !important;
+  pointer-events: auto;
+}
+
 /* ---------- Actions toolbar (top-right, hidden until hover/selected) ---------- */
 
 .rfb-builder-canvas__item-actions {
@@ -2554,4 +2564,69 @@
   .rfb-builder-settings__panel {
     padding: 1rem;
   }
+}
+
+/* ==========================================================================
+ *  Conditions tab (declarative show/hide/enable/disable rules)
+ * ========================================================================== */
+
+.rfb-builder-conditions__empty {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--rfb-muted, #64748b);
+  background: var(--rfb-surface-subtle, #f8fafc);
+  border: 1px dashed var(--rfb-border, #e2e8f0);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.rfb-builder-conditions__empty code {
+  background: var(--rfb-bg, #fff);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--rfb-border, #e2e8f0);
+  font-size: 0.72rem;
+}
+
+.rfb-builder-conditions__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rfb-builder-conditions__rule {
+  background: var(--rfb-surface-subtle, #f8fafc);
+  border: 1px solid var(--rfb-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem 0.75rem;
+}
+
+.rfb-builder-conditions__rule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rfb-builder-conditions__rule-index {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rfb-muted, #64748b);
+}
+
+.rfb-builder-conditions__rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.6rem;
+}
+
+.rfb-builder-conditions__order-hint {
+  margin-top: 0.6rem;
 }

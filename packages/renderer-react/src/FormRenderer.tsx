@@ -411,6 +411,12 @@ function FormBody({
 
       <div className="rfb-renderer__grid">
         {fields.map((field) => {
+          // Conditional visibility: declarative `field.conditions` rules
+          // (and action-driven overrides) are evaluated on every render via
+          // the engine. Hiding here also removes the field from the layout
+          // grid so it doesn't leave a gap.
+          if (!form.engine.isFieldEffectivelyVisible(field)) return null;
+
           const span = Math.max(
             1,
             Math.min(12, Number(field.props?.gridSpan ?? 12)),

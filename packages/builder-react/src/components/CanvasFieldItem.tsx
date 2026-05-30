@@ -116,6 +116,16 @@ export function CanvasFieldItem({
         </span>
       )}
 
+      {(field.conditions?.length ?? 0) > 0 && (
+        <span
+          className="rfb-builder-canvas__item-badge rfb-builder-canvas__item-badge--conditional"
+          title={`${field.conditions!.length} conditional rule${field.conditions!.length === 1 ? "" : "s"}`}
+        >
+          ⚡ {field.conditions!.length} rule
+          {field.conditions!.length === 1 ? "" : "s"}
+        </span>
+      )}
+
       <div
         className="rfb-builder-canvas__item-drag"
         {...attributes}
