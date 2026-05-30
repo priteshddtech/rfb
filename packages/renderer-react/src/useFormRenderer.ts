@@ -119,6 +119,14 @@ export function useFormRenderer(
     return result;
   }, [engine, bump]);
 
+  const reset = useCallback(
+    (next?: Record<string, unknown>) => {
+      engine.reset(next);
+      bump();
+    },
+    [engine, bump],
+  );
+
   const layoutType = schema.layout?.type ?? "single";
 
   return {
@@ -139,6 +147,7 @@ export function useFormRenderer(
     previousPage,
     goToPage,
     submit,
+    reset,
     triggerEvent,
   };
 }

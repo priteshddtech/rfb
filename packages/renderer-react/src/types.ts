@@ -67,6 +67,8 @@ export interface UseFormRendererReturn {
   previousPage: () => boolean;
   goToPage: (index: number) => boolean;
   submit: () => Promise<SubmitResult>;
+  /** Reset the form back to its initial / default values. */
+  reset: (initialValues?: Record<string, unknown>) => void;
   /** Imperatively trigger a field event (e.g. from external code). */
   triggerEvent: (fieldId: string, event: FieldEvent) => Promise<void>;
   engine: import("@rfb-ddt/core").FormEngine;

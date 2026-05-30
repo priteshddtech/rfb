@@ -45,6 +45,8 @@ export {
 } from "./api/mapApiResponseToSchema.js";
 export type { ApiToSchemaMapper } from "./api/mapApiResponseToSchema.js";
 
+export { interpolate } from "./submission/interpolate.js";
+
 export { runActions } from "./actions/runActions.js";
 export { evaluateActionCondition } from "./actions/evaluateActionCondition.js";
 export type {

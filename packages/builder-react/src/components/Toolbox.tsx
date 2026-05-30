@@ -1,4 +1,5 @@
 import type {
+  FormField,
   FormSettings,
   LayoutType,
   ModalSettings,
@@ -8,6 +9,7 @@ import { useState } from "react";
 import { DEFAULT_TOOLBOX_FIELDS } from "../constants.js";
 import { IconChevronDown } from "../icons.js";
 import type { ToolboxFieldMeta } from "../types.js";
+import { SubmissionSettingsBlock } from "./SubmissionSettingsBlock.js";
 import { ToolboxItem } from "./ToolboxItem.js";
 
 export type ToolboxPanel = "components" | "form" | "meta";
@@ -22,6 +24,8 @@ export interface ToolboxProps {
   formVersion: string;
   layoutType: LayoutType;
   formSettings: FormSettings | undefined;
+  /** All form fields — used to surface available `{name}` tokens in the submission editor. */
+  formFields: FormField[];
   onFormPatch: (patch: { title?: string; description?: string }) => void;
   onMetaPatch: (patch: { id?: string; version?: string }) => void;
   onLayoutTypeChange: (type: LayoutType) => void;
@@ -61,6 +65,7 @@ export function Toolbox({
   formVersion,
   layoutType,
   formSettings,
+  formFields,
   onFormPatch,
   onMetaPatch,
   onLayoutTypeChange,
@@ -210,6 +215,12 @@ export function Toolbox({
 
             <ModalSettingsBlock
               settings={formSettings}
+              onSettingsPatch={onSettingsPatch}
+            />
+
+            <SubmissionSettingsBlock
+              settings={formSettings}
+              formFields={formFields}
               onSettingsPatch={onSettingsPatch}
             />
           </div>

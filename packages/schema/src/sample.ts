@@ -9,7 +9,14 @@ export const sampleContactForm: FormSchema = {
   settings: {
     submitLabel: "Send message",
     cancelLabel: "Cancel",
-    successMessage: "Thanks! Your message was sent.",
+    submission: {
+      successMessage: {
+        title: "Thank you!",
+        body: "We received your message and will get back to you shortly.",
+        showSubmitAgain: true,
+      },
+      resetAfterSubmit: true,
+    },
     mode: "add",
   },
   layout: {

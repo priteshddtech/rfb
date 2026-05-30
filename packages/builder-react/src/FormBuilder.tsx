@@ -533,6 +533,7 @@ export function FormBuilder({
               formVersion={schema.version}
               layoutType={layoutType}
               formSettings={schema.settings}
+              formFields={schema.fields}
               onFormPatch={(patch) => updateSchema({ ...schema, ...patch })}
               onMetaPatch={(patch) => updateSchema({ ...schema, ...patch })}
               onLayoutTypeChange={handleLayoutTypeChange}

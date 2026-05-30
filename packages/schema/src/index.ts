@@ -1,5 +1,7 @@
 export { SCHEMA_VERSION } from "./types/form.js";
 export type {
+  EmailNotification,
+  ErrorMessage,
   FormId,
   FormLayout,
   FormMode,
@@ -9,6 +11,11 @@ export type {
   LayoutType,
   ModalSettings,
   ModalSize,
+  SubmissionCondition,
+  SubmissionSettings,
+  SuccessMessage,
+  SuccessRedirect,
+  WebhookConfig,
 } from "./types/form.js";
 
 export type {

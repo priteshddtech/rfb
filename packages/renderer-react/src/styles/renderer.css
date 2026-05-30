@@ -96,6 +96,86 @@
   color: #166534;
 }
 
+/* ---------- Success / error feedback view ---------- */
+
+.rfb-renderer--success,
+.rfb-renderer--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  padding: 2rem 1rem;
+}
+
+.rfb-renderer__feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  max-width: 32rem;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.rfb-renderer__feedback--success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.rfb-renderer__feedback--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.rfb-renderer__feedback-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.rfb-renderer__feedback--success .rfb-renderer__feedback-icon {
+  background: #10b981;
+}
+
+.rfb-renderer__feedback--error .rfb-renderer__feedback-icon {
+  background: #ef4444;
+}
+
+.rfb-renderer__feedback-title {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.rfb-renderer__feedback-body {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #3f3f46;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.rfb-renderer__feedback-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.rfb-renderer__feedback .rfb-renderer__button {
+  margin-top: 0.4rem;
+}
+
 /* ---------- Stepper (multi-step) ---------- */
 
 .rfb-renderer__stepper {
